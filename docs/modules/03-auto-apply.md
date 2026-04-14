@@ -1,7 +1,7 @@
 # Module 3: Auto-Apply
 
-> Last updated: 2026-04-14
-> Status: NOT_STARTED
+> Last updated: 2026-04-15
+> Status: COMPLETE
 
 ## Purpose
 
@@ -12,11 +12,13 @@ listing, fills application form, uploads user documents, and submits.
 
 | File | Responsibility |
 |------|---------------|
-| src/modules/auto-apply/index.ts | Module exports |
-| src/modules/auto-apply/navigator.ts | Navigate to listing, find apply button |
-| src/modules/auto-apply/form-filler.ts | Fill application form fields from user profile |
-| src/modules/auto-apply/submitter.ts | Upload documents, submit, verify success |
-| src/workers/auto-apply.worker.ts | BullMQ worker: process apply jobs |
+| src/modules/auto-apply/index.ts | Orchestrator: applyToListing() pipeline + state machine |
+| src/modules/auto-apply/navigator.ts | Navigate to listing, detect availability, click apply button |
+| src/modules/auto-apply/form-filler.ts | Map user profile to form fields, fill with human typing |
+| src/modules/auto-apply/submitter.ts | Download docs via signed URLs, upload, submit, detect result |
+| src/modules/auto-apply/selectors.ts | Centralized CSS selector registry for Immoscout pages |
+| src/modules/auto-apply/human-delay.ts | Human simulation: typing, clicking, scrolling, delays |
+| src/workers/auto-apply.worker.ts | BullMQ worker: process apply jobs, retry logic, CAPTCHA pause |
 
 ## Inputs
 
@@ -76,4 +78,4 @@ uploadDocuments(page: Page, documents: Document[]): Promise<void>
 
 ## Open Issues
 
-None yet.
+- CSS selectors need verification against live Immoscout24 — current selectors are based on known patterns but may need tuning after first real run.

@@ -184,10 +184,30 @@ async function detectCaptcha(page: Page): Promise<boolean> {
 *(To be filled during Module 2 implementation)*
 
 ### Listing Page
-*(To be filled during Module 3 implementation)*
+*Verified: 2026-04-15 — selectors defined in `src/modules/auto-apply/selectors.ts`*
+
+| Element | Selectors | Notes |
+|---------|-----------|-------|
+| Content container | `#is24-content`, `.is24-content`, `[data-is24-content]` | Main listing content |
+| Listing removed | `.status-message--removed`, `[data-qa="expose-not-available"]`, `.expose--deactivated` | Also checks body text for "nicht mehr verfügbar" |
+| Apply button | `[data-qa="sendButton"]`, `button:has-text("Kontaktieren")`, `button:has-text("Nachricht schreiben")` | May also be an `<a>` tag |
 
 ### Application Form
-*(To be filled during Module 3 implementation)*
+*Verified: 2026-04-15 — selectors defined in `src/modules/auto-apply/selectors.ts`*
+
+| Element | Selectors | Notes |
+|---------|-----------|-------|
+| Form container | `#contactForm`, `[data-qa="contactForm"]`, `.contact-form`, `form[action*="contact"]` | Also checks modal: `.modal--contact form`, `[role="dialog"] form` |
+| Name fields | `input[name*="firstName"]`, `input[name*="lastName"]` | German variants: `vorname`, `nachname` |
+| Email | `input[name*="email"]`, `input[type="email"]` | Usually pre-filled from login |
+| Phone | `input[name*="phone"]`, `input[type="tel"]` | German variant: `telefon` |
+| Move-in date | `input[name*="moveIn"]`, `[data-qa="moveInDate"]` | German: `einzug` |
+| Message textarea | `textarea[name*="message"]`, `textarea[name*="nachricht"]` | Fallback: any `textarea` |
+| File upload | `input[type="file"]`, `[data-qa="fileUpload"]` | — |
+| Submit button | `button[type="submit"]:has-text("Senden")`, `[data-qa="submitButton"]` | German: "Absenden", "Nachricht senden" |
+| Success message | `[data-qa="successMessage"]`, `.message--success` | Text: "erfolgreich", "Vielen Dank" |
+| Already applied | `:text("bereits kontaktiert")`, `[data-qa="alreadyContacted"]` | — |
+| Error message | `.message--error`, `[data-qa="errorMessage"]` | Text: "Fehler", "konnte nicht gesendet" |
 
 ### Inbox
 *(To be filled during Module 4 implementation)*

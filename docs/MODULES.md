@@ -9,7 +9,7 @@
 |---|--------|--------|-------------|--------------|-------------|
 | 1 | Session Manager | NOT_STARTED | src/modules/session/index.ts | — | — |
 | 2 | Listing Monitor | NOT_STARTED | src/modules/listing-monitor/index.ts | M1 | — |
-| 3 | Auto-Apply | NOT_STARTED | src/modules/auto-apply/index.ts | M1, M2 | — |
+| 3 | Auto-Apply | COMPLETE | src/modules/auto-apply/index.ts | M1, M2 | Selectors need verification against live Immoscout |
 | 4 | Inbox Monitor | NOT_STARTED | src/modules/inbox-monitor/index.ts | M1 | — |
 | 5 | Document Sender | NOT_STARTED | src/modules/document-sender/index.ts | M1, M4 | — |
 | 6 | Appointment Handler | NOT_STARTED | src/modules/appointment-handler/index.ts | M4 | — |
