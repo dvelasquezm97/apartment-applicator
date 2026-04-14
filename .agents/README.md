@@ -39,3 +39,4 @@ Examples:
 
 Every `git commit` triggers automatic Codex review. Reports saved to `reviews/`.
 Bypass: `SKIP_CODEX_REVIEW=1 git commit -m "..."`
+
