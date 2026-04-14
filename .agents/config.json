@@ -1,36 +1,19 @@
 {
   "version": "1.0.0",
-  "project": "berlinkeys",
+  "product": "berlinkeys",
+  "company": "aucto",
   "paperclip": {
     "url": "http://127.0.0.1:3100",
-    "enabled": true,
-    "company_id": "6f19b92f-5fad-4cee-955d-f5adcf3f138b",
-    "agents": {
-      "claude": "8ba47996-5841-473e-8b01-1de6c3a6264e",
-      "codex": "5606323f-18a1-4beb-b6ea-db475f1d9ac7",
-      "product_lead": "3ab74034-8740-4eae-9958-135fb8e08c7f",
-      "coo": "06584bfd-8041-4c42-b61a-69b28a601de0",
-      "cto": "f87769af-91fb-48b3-b097-20bf48cfe289",
-      "compliance_officer": "034d4d7e-3ba9-49d6-95e9-61f87746f2b8",
-      "staff_engineer": "1665abc5-c142-47de-89a6-a56d13075b5e",
-      "release_engineer": "a06c947e-b339-4fb9-9bfd-b871f9dfa02b"
-    },
-    "projects": {
-      "infrastructure": "89ca0702-5ced-4b88-8a43-37257f3fd6a9",
-      "m1_session": "488f0c0a-fad2-49df-9b16-632ec426147c"
-    },
-    "start": "npx paperclipai run"
+    "parent_company_id": "88aa9f08-9002-4a87-a5d0-0f55f3bb1593",
+    "company_id": "54d33ea4-3d75-4ed3-8729-91125c67304f",
+    "company_prefix": "BER"
   },
   "claude_mem": {
-    "url": "http://127.0.0.1:37777",
-    "search": "/mem-search",
-    "start": "npx claude-mem start"
+    "url": "http://127.0.0.1:37777"
   },
   "codex_review": {
     "enabled": true,
     "skip_docs_only": true,
-    "timeout_seconds": 120,
-    "fail_open": true,
-    "docs_patterns": ["*.md", "docs/**", "*.txt", "LICENSE", "CLAUDE.md", ".agents/**"]
+    "fail_open": true
   }
 }
