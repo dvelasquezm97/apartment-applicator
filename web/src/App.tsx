@@ -4,12 +4,10 @@ import { Dashboard } from './pages/Dashboard.js';
 import { Applications } from './pages/Applications.js';
 import { Documents } from './pages/Documents.js';
 import { Settings } from './pages/Settings.js';
-import { Login } from './pages/Login.js';
 
 export function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/applications" element={<Applications />} />

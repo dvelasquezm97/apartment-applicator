@@ -16,7 +16,7 @@
 | 7 | External Form | NOT_STARTED | src/modules/external-form/index.ts | M4 | — |
 | 8 | Manual Form Upload | NOT_STARTED | src/modules/manual-form-upload/index.ts | M7 | — |
 | 9 | Telegram Bot | NOT_STARTED | src/modules/telegram-bot/index.ts | — | — |
-| 10 | Web Dashboard | NOT_STARTED | src/modules/dashboard/index.ts | — | — |
+| 10 | Web Dashboard | IN_PROGRESS | src/modules/dashboard/index.ts | — | API routes + React pages implemented, no auth yet |
 
 ## Status Values
 
