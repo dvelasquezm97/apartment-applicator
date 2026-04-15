@@ -1,7 +1,7 @@
 # BerlinKeys — Automated Apartment Application System for Immoscout24
 
-> Status: SCAFFOLD COMPLETE — All modules stubbed, no implementation yet
-> Last updated: 2026-04-14
+> Status: M1 Session Manager COMPLETE, M2 Listing Monitor COMPLETE
+> Last updated: 2026-04-15
 > Company: [Aucto](~/Desktop/aucto/) — Agentic-first company
 
 ## Quick Commands
@@ -28,11 +28,13 @@
 - [docs/PROGRESS.md](docs/PROGRESS.md) — Session log and next steps
 - [docs/modules/](docs/modules/) — Per-module micro-context (01 through 10)
 - [.agents/README.md](.agents/README.md) — Agent communication protocol
-- [.claude/commands/](.claude/commands/) — Custom skills (8 agent skills + 3 session rituals)
+- [.claude/commands/](.claude/commands/) — Product-specific skills (start-session, end-session, module-status)
+- [docs/AUCTO-OS.md](docs/AUCTO-OS.md) — How this product connects to the Aucto OS
 
-## Module Status (all NOT_STARTED)
-M1 Session | M2 Listing Monitor | M3 Auto-Apply | M4 Inbox Monitor | M5 Doc Sender
-M6 Appointment | M7 External Form | M8 Manual Form | M9 Telegram | M10 Dashboard
+## Module Status
+M1 Session COMPLETE | M2 Listing Monitor COMPLETE | M3 Auto-Apply NOT_STARTED
+M4 Inbox Monitor NOT_STARTED | M5 Doc Sender NOT_STARTED | M6 Appointment NOT_STARTED
+M7 External Form NOT_STARTED | M8 Manual Form NOT_STARTED | M9 Telegram NOT_STARTED | M10 Dashboard NOT_STARTED
 
 ## Session Rituals
 - Start: `/start-session` — reads context, asks which module to work on
