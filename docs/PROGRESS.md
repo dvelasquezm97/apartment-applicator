@@ -79,3 +79,36 @@
 
 ### What to build next
 - Module 5: Document Sender (auto-send documents on DOCUMENT_REQUEST)
+
+## Session: 2026-04-15 — Phase A: API + Dashboard
+
+### What was done
+- CTO audit of full project state — identified API + Dashboard as critical path to testable UI
+- Implemented Fastify server plugins: CORS, multipart upload (10MB), rate limiting, static file serving
+- Implemented 7 API route files: settings (credentials + profile + pause), documents (upload/list/delete/signed URLs), applications (list with listings, detail with timeline, messages), listings, stats, health (real Redis + Supabase checks)
+- Implemented frontend data layer: API client with file upload support, 9 React Query hooks
+- Built 4 dashboard pages: Dashboard (stats cards, automation status), Applications (expandable list with timeline + messages), Documents (upload with type selection, list, delete), Settings (Immoscout credentials, profile form, pause/resume toggle)
+- Removed login/auth — all routes open for dev testing
+- Updated App.tsx to skip login page, route directly to dashboard
+- Created Paperclip project for Phase A with 12 subtask issues
+- Fixed Paperclip issue update endpoint (was using wrong route — documented in memory)
+
+### Decisions made
+- Skip auth for now — all API routes are open, using X-User-Id header for dev
+- Settings GET never exposes passwords — only masked values
+- Supabase Auth planned for later (magic link or email/password)
+- API routes use service role key (same as workers) — RLS enforcement deferred to auth phase
+
+### Current blockers
+- Need Supabase project created and migrations applied to test API routes
+- Need Redis running for health checks and workers
+- Need .env file with SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, REDIS_URL, ENCRYPTION_KEY
+- CSS selectors for M3 and M4 need verification against live Immoscout24
+
+### What to build next
+- Set up Supabase project + run migrations + create .env
+- Test dashboard end-to-end with real data
+- Add auth (Supabase Auth) when ready for multi-user
+- Module 5: Document Sender (reply to inbox thread with user documents)
+- Module 6: Appointment Handler (parse viewing invite, create Google Calendar event)
+- Module 9: Telegram Bot (notifications + /pause /resume /status commands)

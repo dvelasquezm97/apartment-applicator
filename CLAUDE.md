@@ -1,6 +1,6 @@
 # BerlinKeys — Automated Apartment Application System for Immoscout24
 
-> Status: M1 Session Manager COMPLETE, M2 Listing Monitor COMPLETE
+> Status: M1-M4 COMPLETE, Phase A (API + Dashboard) done — ready for end-to-end testing
 > Last updated: 2026-04-15
 > Company: [Aucto](~/Desktop/aucto/) — Agentic-first company
 
@@ -32,9 +32,9 @@
 - [docs/AUCTO-OS.md](docs/AUCTO-OS.md) — How this product connects to the Aucto OS
 
 ## Module Status
-M1 Session COMPLETE | M2 Listing Monitor COMPLETE | M3 Auto-Apply NOT_STARTED
-M4 Inbox Monitor NOT_STARTED | M5 Doc Sender NOT_STARTED | M6 Appointment NOT_STARTED
-M7 External Form NOT_STARTED | M8 Manual Form NOT_STARTED | M9 Telegram NOT_STARTED | M10 Dashboard NOT_STARTED
+M1 Session COMPLETE | M2 Listing Monitor COMPLETE | M3 Auto-Apply COMPLETE | M4 Inbox Monitor COMPLETE
+M5 Doc Sender NOT_STARTED | M6 Appointment NOT_STARTED | M7 External Form NOT_STARTED
+M8 Manual Form NOT_STARTED | M9 Telegram NOT_STARTED | M10 Dashboard IN_PROGRESS (API + pages done, no auth)
 
 ## Session Rituals
 - Start: `/start-session` — reads context, asks which module to work on

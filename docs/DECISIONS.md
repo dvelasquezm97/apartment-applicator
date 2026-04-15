@@ -1,6 +1,6 @@
 # Architectural Decisions
 
-> Last updated: 2026-04-14
+> Last updated: 2026-04-15
 > Status: ACTIVE
 
 Append-only log. Never delete entries — strike through if reversed.
@@ -69,3 +69,49 @@ puppeteer-extra-plugin-stealth for anti-bot evasion.
 **Rationale:** PostgreSQL folds unquoted identifiers to lowercase. snake_case is the
 standard convention and avoids quoting issues. TypeScript types use camelCase. Conversion
 happens at the Supabase client boundary.
+
+---
+
+## [2026-04-15] Decision: Centralized CSS selectors per module
+
+**Options considered:**
+- A) Inline selectors in each function
+- B) Centralized selectors.ts file per module
+
+**Chosen:** B — Centralized selectors.ts
+
+**Rationale:** Immoscout can change their HTML at any time. Centralizing all CSS selectors
+in a single file per module (auto-apply/selectors.ts, inbox-monitor/selectors.ts) means
+selector updates only require changing one file. Each selector has multiple fallback variants
+(data-qa attributes, class names, text content) for resilience.
+
+---
+
+## [2026-04-15] Decision: Two-tier message classification (rules + Claude API)
+
+**Options considered:**
+- A) Claude API for all message classification
+- B) Rule-based only (keyword matching)
+- C) Rule-based first, Claude API fallback for ambiguous messages
+
+**Chosen:** C — Two-tier: rules first, Claude Sonnet fallback
+
+**Rationale:** Rule-based classification is free and fast — handles >80% of messages
+(German keywords for Unterlagen, Besichtigung, Absage, etc.). Claude Sonnet API is only
+called when rule confidence is below 0.7, keeping API costs low. Structured tool_use
+output ensures reliable intent extraction from Claude.
+
+---
+
+## [2026-04-15] Decision: Skip auth for Phase A dashboard
+
+**Options considered:**
+- A) Implement Supabase Auth before dashboard
+- B) Ship dashboard without auth, add later
+
+**Chosen:** B — No auth for now
+
+**Rationale:** Getting to a testable UI is the priority. Auth adds complexity (JWT
+middleware, login page, session management) that blocks testing. All API routes are open
+with a dev-mode X-User-Id header. Supabase Auth will be added when moving to multi-user
+or production.

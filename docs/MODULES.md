@@ -1,14 +1,14 @@
 # Modules
 
-> Last updated: 2026-04-14
+> Last updated: 2026-04-15
 > Status: ACTIVE
 
 ## Status Table
 
 | # | Module | Status | Entry Point | Dependencies | Known Issues |
 |---|--------|--------|-------------|--------------|-------------|
-| 1 | Session Manager | NOT_STARTED | src/modules/session/index.ts | — | — |
-| 2 | Listing Monitor | NOT_STARTED | src/modules/listing-monitor/index.ts | M1 | — |
+| 1 | Session Manager | COMPLETE | src/modules/session/index.ts | — | — |
+| 2 | Listing Monitor | COMPLETE | src/modules/listing-monitor/index.ts | M1 | — |
 | 3 | Auto-Apply | COMPLETE | src/modules/auto-apply/index.ts | M1, M2 | Selectors need verification against live Immoscout |
 | 4 | Inbox Monitor | COMPLETE | src/modules/inbox-monitor/index.ts | M1 | Inbox selectors need verification against live Immoscout |
 | 5 | Document Sender | NOT_STARTED | src/modules/document-sender/index.ts | M1, M4 | — |
