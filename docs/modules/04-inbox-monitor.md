@@ -1,7 +1,7 @@
 # Module 4: Inbox Monitor
 
-> Last updated: 2026-04-14
-> Status: NOT_STARTED
+> Last updated: 2026-04-15
+> Status: COMPLETE
 
 ## Purpose
 
@@ -13,10 +13,12 @@ module (document-sender, appointment-handler, or external-form).
 
 | File | Responsibility |
 |------|---------------|
-| src/modules/inbox-monitor/index.ts | Module exports |
-| src/modules/inbox-monitor/reader.ts | Navigate inbox, extract messages per thread |
-| src/modules/inbox-monitor/classifier.ts | Classify message intent (rules + Claude API fallback) |
-| src/workers/inbox-monitor.worker.ts | BullMQ worker: repeatable job handler |
+| src/modules/inbox-monitor/index.ts | Orchestrator: runInboxMonitor() pipeline |
+| src/modules/inbox-monitor/reader.ts | Navigate inbox, scrape threads, extract messages, match to applications |
+| src/modules/inbox-monitor/classifier.ts | Two-tier classifier: rule-based patterns + Claude Sonnet API fallback |
+| src/modules/inbox-monitor/router.ts | Route classified messages to downstream queues + state machine transitions |
+| src/modules/inbox-monitor/selectors.ts | Centralized CSS selector registry for Immoscout inbox pages |
+| src/workers/inbox-monitor.worker.ts | BullMQ worker: repeatable job with automation pause check |
 
 ## Inputs
 
@@ -87,4 +89,5 @@ routeMessage(message: InboxMessage, intent: MessageIntent): Promise<void>
 
 ## Open Issues
 
-None yet.
+- Inbox CSS selectors need verification against live Immoscout24.
+- Claude API fallback cost should be monitored — rule-based tier should handle >80% of messages.

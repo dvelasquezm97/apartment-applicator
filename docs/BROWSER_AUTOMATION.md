@@ -210,7 +210,19 @@ async function detectCaptcha(page: Page): Promise<boolean> {
 | Error message | `.message--error`, `[data-qa="errorMessage"]` | Text: "Fehler", "konnte nicht gesendet" |
 
 ### Inbox
-*(To be filled during Module 4 implementation)*
+*Verified: 2026-04-15 — selectors defined in `src/modules/inbox-monitor/selectors.ts`*
+
+| Element | Selectors | Notes |
+|---------|-----------|-------|
+| Inbox nav link | `a[href*="/nachrichten"]`, `[data-qa="messaging-link"]` | Also text: "Nachrichten" |
+| Thread list | `.message-list`, `[data-qa="message-list"]`, `.conversation-list` | Container for all threads |
+| Thread item | `.message-list-item`, `[data-qa="message-item"]`, `li[data-conversation-id]` | Individual thread |
+| Thread title | `.message-list-item__title`, `[data-qa="message-subject"]` | Subject line |
+| Unread indicator | `.message-list-item--unread`, `[data-qa="unread-indicator"]` | CSS class on unread threads |
+| Listing link | `a[href*="/expose/"]`, `[data-qa="listing-link"]` | Links thread to application |
+| Message body | `.message-thread__message-body`, `[data-qa="message-body"]` | Text content |
+| Sent indicator | `.message-thread__message--sent`, `[data-qa="message-sent"]` | Our messages |
+| Received indicator | `.message-thread__message--received`, `[data-qa="message-received"]` | Landlord messages |
 
 ### Login Page
 *(To be filled during Module 1 implementation)*
