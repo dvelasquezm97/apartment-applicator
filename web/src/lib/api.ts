@@ -1,13 +1,18 @@
 const API_BASE = '/api';
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    ...((options?.headers as Record<string, string>) || {}),
+  };
+  // Only set Content-Type for requests that have a body, otherwise
+  // Fastify rejects the empty body with 400
+  if (options?.body) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      // No auth for now — using X-User-Id header for dev
-      ...((options?.headers as Record<string, string>) || {}),
-    },
     ...options,
+    headers,
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
