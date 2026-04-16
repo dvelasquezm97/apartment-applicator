@@ -7,7 +7,7 @@ COPY src/ src/
 RUN npx tsc --outDir dist
 
 # Build dashboard
-COPY vite.config.ts ./
+COPY vite.config.ts tailwind.config.ts postcss.config.js ./
 COPY web/ web/
 RUN npx vite build --config vite.config.ts
 
