@@ -119,16 +119,25 @@ export class ApplyLoop {
     // 2. Fetch user data from Supabase
     const userData = await this.fetchUserData();
     if (!userData.searchUrl) {
-      throw new Error('No search URL configured. Set a search URL in settings.');
+      this.progress.status = 'done';
+      this.progress.currentListing = 'No search URL configured — set one in Settings';
+      this.broadcastProgress();
+      return;
     }
     if (!userData.profile || !userData.profile.name) {
-      throw new Error('User profile is incomplete. Fill in your profile before applying.');
+      this.progress.status = 'done';
+      this.progress.currentListing = 'Profile incomplete — fill in your name in Settings';
+      this.broadcastProgress();
+      return;
     }
 
     // 3. Check daily cap
     const remainingToday = await this.getRemainingDailyCap();
     if (remainingToday <= 0) {
       log.info({ userId: this.userId }, 'Daily application cap reached');
+      this.progress.status = 'done';
+      this.progress.currentListing = 'Daily application cap reached — try again tomorrow';
+      this.broadcastProgress();
       return;
     }
 
