@@ -1,7 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('../../src/lib/logger.js', () => ({
+  createChildLogger: () => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() }),
+}));
+
 vi.mock('../../src/modules/session/captcha-detector.js', () => ({
   detectCaptcha: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('../../src/config/constants.js', () => ({
+  DELAYS: {
+    BETWEEN_PAGES: { min: 0, max: 0 },
+    BEFORE_CLICK: { min: 0, max: 0 },
+    TYPING_PER_CHAR: { min: 0, max: 0 },
+    BETWEEN_FIELDS: { min: 0, max: 0 },
+    BEFORE_SUBMIT: { min: 0, max: 0 },
+  },
 }));
 
 import { login, isLoggedIn } from '../../src/modules/session/login.js';
@@ -13,16 +27,28 @@ function createMockPage(options: {
 } = {}) {
   const { loginError = null, isLoggedIn = true } = options;
   return {
-    goto: vi.fn(),
-    click: vi.fn(),
-    keyboard: { type: vi.fn() },
-    waitForLoadState: vi.fn(),
+    goto: vi.fn().mockResolvedValue(undefined),
+    click: vi.fn().mockResolvedValue(undefined),
+    keyboard: { type: vi.fn().mockResolvedValue(undefined) },
+    waitForLoadState: vi.fn().mockResolvedValue(undefined),
+    waitForSelector: vi.fn().mockResolvedValue({
+      scrollIntoViewIfNeeded: vi.fn(),
+      click: vi.fn(),
+    }),
+    waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    screenshot: vi.fn().mockResolvedValue(undefined),
     url: vi.fn().mockReturnValue('https://www.immobilienscout24.de/meinkonto'),
     $: vi.fn(async (selector: string) => {
-      if (selector.includes('error') && loginError) {
+      // Cookie consent — return null (no popup)
+      if (selector.includes('consent') || selector.includes('akzeptieren')) {
+        return null;
+      }
+      // Login error selectors
+      if ((selector.includes('error') || selector.includes('alert')) && loginError) {
         return { textContent: vi.fn().mockResolvedValue(loginError) };
       }
-      if (selector.includes('user-menu') || selector.includes('meinkonto')) {
+      // Logged-in indicators
+      if (selector.includes('user-menu') || selector.includes('meinkonto') || selector.includes('geschlossenerbereich')) {
         return isLoggedIn ? {} : null;
       }
       return null;
@@ -40,35 +66,40 @@ describe('login', () => {
     vi.spyOn(global, 'setTimeout').mockImplementation((fn: any) => { fn(); return 0 as any; });
   });
 
-  it('fills email, password, submits, and verifies login', async () => {
+  it('navigates to SSO login, fills email and password in two steps', async () => {
     const page = createMockPage({ isLoggedIn: true });
 
     await login(page, 'test@example.com', 'password123');
 
+    // Should navigate to SSO URL
     expect(page.goto).toHaveBeenCalledWith(
-      expect.stringContaining('immobilienscout24.de'),
+      'https://sso.immobilienscout24.de/sso/login?appName=is24main',
       expect.any(Object),
     );
-    expect(page.click).toHaveBeenCalled();
+    // Should wait for email input and password input
+    expect(page.waitForSelector).toHaveBeenCalledWith('#username', expect.any(Object));
+    expect(page.waitForSelector).toHaveBeenCalledWith('#password', expect.any(Object));
+    // Should click submit buttons (email step + password step)
+    expect(page.click).toHaveBeenCalledWith('#submit');
+    // Should type email and password
     expect(page.keyboard.type).toHaveBeenCalled();
   });
 
-  it('throws when CAPTCHA detected on login page', async () => {
-    vi.mocked(detectCaptcha).mockResolvedValue(true);
-    const page = createMockPage();
-
-    await expect(login(page, 'test@example.com', 'pass')).rejects.toThrow('CAPTCHA detected on login page');
-  });
-
-  it('throws when CAPTCHA detected after submit', async () => {
+  it('waits for manual CAPTCHA solve when detected before login', async () => {
+    // CAPTCHA detected on first call, then resolved on second call
     let callCount = 0;
     vi.mocked(detectCaptcha).mockImplementation(async () => {
       callCount++;
-      return callCount > 1; // false first time, true second time
+      return callCount === 1; // true first time, false after
     });
-    const page = createMockPage();
+    const page = createMockPage({ isLoggedIn: true });
 
-    await expect(login(page, 'test@example.com', 'pass')).rejects.toThrow('CAPTCHA detected after login submit');
+    await login(page, 'test@example.com', 'pass');
+
+    // Should have called detectCaptcha multiple times (initial + polling)
+    expect(detectCaptcha).toHaveBeenCalled();
+    // Should still succeed after CAPTCHA is solved
+    expect(page.goto).toHaveBeenCalled();
   });
 
   it('throws on login error message', async () => {

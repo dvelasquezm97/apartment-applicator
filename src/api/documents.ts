@@ -9,7 +9,7 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
   server.get('/api/documents', async (request) => {
     const userId = getUserId(request);
     const { data, error } = await supabaseAdmin
-      .from('documents')
+      .from('bk_documents')
       .select('*')
       .eq('user_id', userId)
       .order('uploaded_at', { ascending: false });
@@ -59,7 +59,7 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
 
     // Insert document record
     const { data, error: dbError } = await supabaseAdmin
-      .from('documents')
+      .from('bk_documents')
       .insert({
         user_id: userId,
         type: docType,
@@ -84,7 +84,7 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
 
     // Fetch document to get storage key
     const { data: doc } = await supabaseAdmin
-      .from('documents')
+      .from('bk_documents')
       .select('storage_key')
       .eq('id', id)
       .eq('user_id', userId)
@@ -98,7 +98,7 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
     await supabaseAdmin.storage.from('user-documents').remove([doc.storage_key]);
 
     // Delete from DB
-    await supabaseAdmin.from('documents').delete().eq('id', id);
+    await supabaseAdmin.from('bk_documents').delete().eq('id', id);
 
     return { success: true };
   });
@@ -109,7 +109,7 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
     const { id } = request.params;
 
     const { data: doc } = await supabaseAdmin
-      .from('documents')
+      .from('bk_documents')
       .select('storage_key, filename')
       .eq('id', id)
       .eq('user_id', userId)
@@ -132,5 +132,5 @@ export async function registerDocumentRoutes(server: FastifyInstance): Promise<v
 }
 
 function getUserId(request: any): string {
-  return request.headers['x-user-id'] || 'dev-user';
+  return request.headers['x-user-id'] || '00000000-0000-0000-0000-000000000001';
 }

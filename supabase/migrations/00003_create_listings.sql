@@ -1,4 +1,4 @@
-CREATE TABLE public.listings (
+CREATE TABLE public.bk_listings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   immoscout_id text UNIQUE NOT NULL,
   url text NOT NULL,
@@ -11,5 +11,5 @@ CREATE TABLE public.listings (
   status text DEFAULT 'active' NOT NULL CHECK (status IN ('active', 'delisted'))
 );
 
-CREATE INDEX idx_listings_immoscout_id ON public.listings(immoscout_id);
-CREATE INDEX idx_listings_status ON public.listings(status);
+CREATE INDEX idx_bk_listings_immoscout_id ON public.bk_listings(immoscout_id);
+CREATE INDEX idx_bk_listings_status ON public.bk_listings(status);

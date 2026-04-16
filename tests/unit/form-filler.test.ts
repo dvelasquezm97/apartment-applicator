@@ -20,6 +20,27 @@ vi.mock('../../src/config/constants.js', () => ({
   },
 }));
 
+vi.mock('../../src/modules/auto-apply/selectors.js', () => ({
+  FORM: {
+    CONTAINER: ['[role="dialog"]', '.ReactModal__Content', '[class*="modal"]'],
+    FIELDS: {
+      message: 'textarea',
+      salutation: 'select',
+      firstName: 'input[name*="firstName"], input[name*="vorname"]',
+      lastName: 'input[name*="lastName"], input[name*="nachname"]',
+      email: 'input[name*="email"], input[type="email"]',
+      phone: 'input[name*="phone"], input[name*="telefon"], input[type="tel"]',
+      street: 'input[name*="street"], input[name*="straße"], input[name*="strasse"]',
+      houseNumber: 'input[name*="houseNumber"], input[name*="hausnummer"]',
+      zipCode: 'input[name*="zip"], input[name*="plz"], input[name*="postleitzahl"]',
+      city: 'input[name*="city"], input[name*="ort"]',
+    },
+    PROFILE_SHARING_TOGGLE: '[role="switch"], input[type="checkbox"][name*="profil"], [class*="toggle"]',
+  },
+  LISTING: {},
+  RESULT: {},
+}));
+
 import { fillApplicationForm } from '../../src/modules/auto-apply/form-filler.js';
 import { clearAndType } from '../../src/modules/auto-apply/human-delay.js';
 import type { UserProfile } from '../../src/types/session.js';
@@ -29,6 +50,10 @@ function createMockPage(visibleFields: string[] = []) {
     isVisible: vi.fn().mockResolvedValue(true),
     inputValue: vi.fn().mockResolvedValue(''),
     evaluate: vi.fn().mockResolvedValue('input'),
+    click: vi.fn().mockResolvedValue(undefined),
+    scrollIntoViewIfNeeded: vi.fn().mockResolvedValue(undefined),
+    selectOption: vi.fn().mockResolvedValue(undefined),
+    textContent: vi.fn().mockResolvedValue(''),
   };
   const hiddenElement = {
     isVisible: vi.fn().mockResolvedValue(false),
@@ -44,6 +69,7 @@ function createMockPage(visibleFields: string[] = []) {
       }
       return null;
     }),
+    $$: vi.fn().mockResolvedValue([]),
     waitForSelector: vi.fn().mockResolvedValue(mockElement),
     waitForTimeout: vi.fn().mockResolvedValue(undefined),
     click: vi.fn().mockResolvedValue(undefined),
@@ -67,7 +93,7 @@ describe('fillApplicationForm', () => {
   };
 
   it('fills fields that exist on the form', async () => {
-    const page = createMockPage(['firstName', 'vorname', 'lastName', 'nachname', 'phone', 'telefon', 'message', 'nachricht', 'contactForm']);
+    const page = createMockPage(['firstName', 'vorname', 'lastName', 'nachname', 'phone', 'telefon', 'textarea', 'dialog']);
 
     const result = await fillApplicationForm(page, fullProfile);
 
@@ -76,17 +102,17 @@ describe('fillApplicationForm', () => {
   });
 
   it('skips fields not found on the form', async () => {
-    // Only form container exists, no individual fields
-    const page = createMockPage(['contactForm']);
+    // Only form container exists (dialog), no individual fields
+    const page = createMockPage(['dialog']);
 
     const result = await fillApplicationForm(page, fullProfile);
 
-    // Only message might match via the generic 'textarea' selector
+    // Fields that couldn't be found should be skipped
     expect(result.fieldsSkipped.length).toBeGreaterThan(0);
   });
 
   it('handles empty profile gracefully', async () => {
-    const page = createMockPage(['contactForm', 'message', 'nachricht']);
+    const page = createMockPage(['dialog', 'textarea']);
     const emptyProfile: UserProfile = {};
 
     const result = await fillApplicationForm(page, emptyProfile);
@@ -107,7 +133,7 @@ describe('fillApplicationForm', () => {
   });
 
   it('splits name into first and last name', async () => {
-    const page = createMockPage(['firstName', 'vorname', 'lastName', 'nachname', 'contactForm']);
+    const page = createMockPage(['firstName', 'vorname', 'lastName', 'nachname', 'dialog']);
 
     await fillApplicationForm(page, { name: 'Anna Schmidt' });
 
@@ -119,7 +145,7 @@ describe('fillApplicationForm', () => {
   });
 
   it('composes German message from profile data', async () => {
-    const page = createMockPage(['contactForm', 'message', 'nachricht']);
+    const page = createMockPage(['dialog', 'textarea']);
 
     await fillApplicationForm(page, fullProfile);
 

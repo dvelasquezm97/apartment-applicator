@@ -8,7 +8,7 @@ export async function registerStatsRoutes(server: FastifyInstance): Promise<void
 
     // Application counts by status
     const { data: apps } = await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .select('status')
       .eq('user_id', userId);
 
@@ -19,25 +19,25 @@ export async function registerStatsRoutes(server: FastifyInstance): Promise<void
 
     // Total listings discovered
     const { count: listingCount } = await supabaseAdmin
-      .from('listings')
+      .from('bk_listings')
       .select('id', { count: 'exact', head: true });
 
     // User's daily count and automation state
     const { data: user } = await supabaseAdmin
-      .from('users')
+      .from('bk_users')
       .select('daily_application_count, automation_paused, daily_application_reset_at')
       .eq('id', userId)
       .single();
 
     // Documents count
     const { count: docCount } = await supabaseAdmin
-      .from('documents')
+      .from('bk_documents')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId);
 
     // Unprocessed messages
     const { count: unprocessedMessages } = await supabaseAdmin
-      .from('messages')
+      .from('bk_messages')
       .select('id', { count: 'exact', head: true })
       .is('processed_at', null);
 
@@ -65,5 +65,5 @@ export async function registerStatsRoutes(server: FastifyInstance): Promise<void
 }
 
 function getUserId(request: any): string {
-  return request.headers['x-user-id'] || 'dev-user';
+  return request.headers['x-user-id'] || '00000000-0000-0000-0000-000000000001';
 }

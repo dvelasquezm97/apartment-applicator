@@ -14,12 +14,21 @@ const CAPTCHA_SELECTORS = [
   '.g-recaptcha',
   '.h-captcha',
   '[data-captcha]',
+  // GeeTest (Immoscout uses this)
+  '.geetest_panel',
+  '.geetest_widget',
+  'iframe[src*="geetest"]',
+  '[class*="geetest"]',
+  // Immoscout-specific bot detection page
+  'text="Du bist ein Mensch aus Fleisch und Blut"',
+  'text="löse bitte diesen kurzen Test"',
 ];
 
 const CAPTCHA_URL_PATTERNS = [
   /captcha/i,
   /challenge/i,
   /verify.*human/i,
+  /geetest/i,
 ];
 
 // One circuit breaker per user, keyed by userId
@@ -51,12 +60,28 @@ export async function detectCaptcha(page: Page, userId?: string): Promise<boolea
 
   // Check DOM selectors
   for (const selector of CAPTCHA_SELECTORS) {
-    const element = await page.$(selector);
-    if (element) {
-      log.warn({ userId, selector }, 'CAPTCHA detected via selector');
+    try {
+      const element = await page.$(selector);
+      if (element) {
+        log.warn({ userId, selector }, 'CAPTCHA detected via selector');
+        if (userId) handleDetection(userId);
+        return true;
+      }
+    } catch {
+      // Invalid selector for this page — skip
+    }
+  }
+
+  // Check page text for bot detection messages
+  try {
+    const bodyText = await page.textContent('body');
+    if (bodyText && /löse bitte diesen kurzen Test|Mensch aus Fleisch und Blut/i.test(bodyText)) {
+      log.warn({ userId }, 'CAPTCHA detected via bot detection page text');
       if (userId) handleDetection(userId);
       return true;
     }
+  } catch {
+    // Page may not have body accessible
   }
 
   return false;

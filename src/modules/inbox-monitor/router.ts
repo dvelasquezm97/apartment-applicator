@@ -97,7 +97,7 @@ export async function routeMessage(
  */
 async function insertMessage(message: InboxMessage, markProcessed: boolean): Promise<string> {
   const { data, error } = await supabaseAdmin
-    .from('messages')
+    .from('bk_messages')
     .insert({
       application_id: message.applicationId,
       direction: message.direction,
@@ -121,7 +121,7 @@ async function insertMessage(message: InboxMessage, markProcessed: boolean): Pro
  */
 async function markMessageProcessed(messageId: string): Promise<void> {
   await supabaseAdmin
-    .from('messages')
+    .from('bk_messages')
     .update({ processed_at: new Date().toISOString() })
     .eq('id', messageId);
 }
@@ -136,7 +136,7 @@ async function transitionApplicationStatus(
   classification: ClassificationResult,
 ): Promise<void> {
   const { data: app } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('status, retry_count, timeline')
     .eq('id', applicationId)
     .single();
@@ -157,7 +157,7 @@ async function transitionApplicationStatus(
     timeline.push(result.timelineEntry);
 
     await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .update({ status: result.newStatus, timeline })
       .eq('id', applicationId);
   } catch (err) {
@@ -170,7 +170,7 @@ async function transitionApplicationStatus(
  */
 async function closeApplication(applicationId: string, note: string): Promise<void> {
   const { data: app } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('status, timeline')
     .eq('id', applicationId)
     .single();
@@ -181,7 +181,7 @@ async function closeApplication(applicationId: string, note: string): Promise<vo
   timeline.push({ status: 'CLOSED', timestamp: new Date().toISOString(), note });
 
   await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .update({ status: 'CLOSED', timeline })
     .eq('id', applicationId);
 

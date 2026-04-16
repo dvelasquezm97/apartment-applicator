@@ -14,11 +14,16 @@ export interface UserProfile {
   dob?: string;
   nationality?: string;
   phone?: string;
+  street?: string;
+  houseNumber?: string;
+  zipCode?: string;
+  city?: string;
   occupation?: string;
   employer?: string;
   income?: number;
   schufaScore?: number;
   moveInDate?: string;
+  numberOfPersons?: number;
   [key: string]: string | number | undefined;
 }
 

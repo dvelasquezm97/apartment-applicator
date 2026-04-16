@@ -1,5 +1,5 @@
 -- Users table (extends Supabase Auth)
-CREATE TABLE public.users (
+CREATE TABLE public.bk_users (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   telegram_chat_id bigint,
   immoscout_email text NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE public.users (
 );
 
 -- Auto-update updated_at trigger
-CREATE OR REPLACE FUNCTION public.update_updated_at()
+CREATE OR REPLACE FUNCTION public.bk_update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
@@ -22,6 +22,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER users_updated_at
-  BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+CREATE TRIGGER bk_users_updated_at
+  BEFORE UPDATE ON public.bk_users
+  FOR EACH ROW EXECUTE FUNCTION public.bk_update_updated_at();

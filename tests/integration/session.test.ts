@@ -53,7 +53,7 @@ const encryptedCookies = encrypt(JSON.stringify(mockCookies));
 vi.mock('../../src/lib/supabase.js', () => ({
   supabaseAdmin: {
     from: vi.fn((table: string) => {
-      if (table === 'users') {
+      if (table === 'bk_users') {
         return {
           select: vi.fn((cols: string) => ({
             eq: vi.fn().mockReturnValue({

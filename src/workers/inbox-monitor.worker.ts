@@ -18,7 +18,7 @@ export function createInboxMonitorWorker(): Worker<InboxMonitorJobData> {
 
       // Check if user has paused automation
       const { data: user } = await supabaseAdmin
-        .from('users')
+        .from('bk_users')
         .select('automation_paused')
         .eq('id', userId)
         .single();
@@ -35,7 +35,7 @@ export function createInboxMonitorWorker(): Worker<InboxMonitorJobData> {
       } catch (err) {
         if (err instanceof CaptchaDetectedError) {
           await supabaseAdmin
-            .from('users')
+            .from('bk_users')
             .update({ automation_paused: true })
             .eq('id', userId);
           log.warn({ userId }, 'CAPTCHA detected — automation paused');

@@ -1,13 +1,13 @@
 # Module 2: Listing Monitor
 
-> Last updated: 2026-04-14
-> Status: NOT_STARTED
+> Last updated: 2026-04-16
+> Status: COMPLETE (selectors verified against live Immoscout HybridView)
 
 ## Purpose
 
-Periodically scrape Immoscout24 saved searches via browser, discover new
-listings, deduplicate against existing DB records, and enqueue apply jobs
-for new matches.
+Scrape Immoscout24 search results via browser, discover new listings,
+deduplicate against existing DB records, and enqueue apply jobs for new matches.
+Uses direct search URL scraping (not saved searches page).
 
 ## Key Files
 
@@ -19,17 +19,32 @@ for new matches.
 | src/modules/listing-monitor/filter.ts | Daily cap check, blackout window (02:00–06:00 Berlin) |
 | src/workers/listing-monitor.worker.ts | BullMQ worker: repeatable job handler |
 
+## Immoscout HybridView Selectors (verified 2026-04-16)
+
+Immoscout redesigned their search results to "HybridView" layout. All old selectors were dead.
+
+| Element | Selector | Notes |
+|---------|----------|-------|
+| Listing card | `.listing-card:not(.touchpoint-card)` | Excludes ad/promo cards |
+| Listing link | `a[href*="exposeId="]` | Uses query param, not `/expose/` path |
+| Already applied | `.shortlist-star[aria-label="vom Merkzettel entfernen"]` | Red heart icon |
+| Title | `[data-testid="headline"]` | — |
+| Address | `[data-testid="hybridViewAddress"]` | — |
+| Attributes | `[data-testid="attributes"]` | Rent, size, rooms |
+| Pagination next | `[data-testid="pagination-button-next"]` | Multi-page support |
+
 ## Inputs
 
 - Authenticated browser page from Module 1
-- Saved searches page on Immoscout24
+- User's search URL (stored directly, not via saved searches page)
 - User's `daily_application_count` and `daily_application_reset_at`
 
 ## Outputs
 
-- New `listings` rows in Supabase
+- New `bk_listings` rows in Supabase
 - `auto-apply` jobs enqueued in BullMQ (one per new listing)
 - Updated `daily_application_count` on user
+- `ScrapedListing` objects with `alreadyApplied` boolean (skips re-application)
 
 ## Dependencies
 
@@ -38,8 +53,8 @@ for new matches.
 ## Key Functions
 
 ```typescript
-// Scrape saved searches and return new listings
-scrapeNewListings(page: Page, userId: string): Promise<Listing[]>
+// Scrape search URL results and return new listings (with pagination)
+scrapeSearchUrl(page: Page, searchUrl: string): Promise<ScrapedListing[]>
 
 // Check if listing already exists in DB
 isDuplicate(immoscoutId: string): Promise<boolean>
@@ -50,7 +65,7 @@ canApply(userId: string): Promise<boolean>
 
 ## Error Handling
 
-- **No saved searches found:** Log warning, skip cycle, Telegram notification
+- **No listings found on search URL:** Log warning, skip cycle, Telegram notification
 - **Page structure changed:** Log scraped HTML for debugging, skip cycle, alert
 - **Scrape timeout (30s):** Retry once, then skip cycle
 - **Daily cap reached:** Skip remaining listings, log, Telegram: "Daily cap reached (X/Y)"
@@ -72,4 +87,4 @@ canApply(userId: string): Promise<boolean>
 
 ## Open Issues
 
-None yet.
+- Inbox selectors (M4) still need verification against live Immoscout — M2 search selectors are verified.

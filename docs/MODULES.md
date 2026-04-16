@@ -1,6 +1,6 @@
 # Modules
 
-> Last updated: 2026-04-15
+> Last updated: 2026-04-16
 > Status: ACTIVE
 
 ## Status Table
@@ -9,8 +9,8 @@
 |---|--------|--------|-------------|--------------|-------------|
 | 1 | Session Manager | COMPLETE | src/modules/session/index.ts | — | — |
 | 2 | Listing Monitor | COMPLETE | src/modules/listing-monitor/index.ts | M1 | — |
-| 3 | Auto-Apply | COMPLETE | src/modules/auto-apply/index.ts | M1, M2 | Selectors need verification against live Immoscout |
-| 4 | Inbox Monitor | COMPLETE | src/modules/inbox-monitor/index.ts | M1 | Inbox selectors need verification against live Immoscout |
+| 3 | Auto-Apply | COMPLETE | src/modules/auto-apply/index.ts | M1, M2 | Selectors verified 2026-04-16 (HybridView layout) |
+| 4 | Inbox Monitor | COMPLETE | src/modules/inbox-monitor/index.ts | M1 | Inbox selectors still need verification against live Immoscout |
 | 5 | Document Sender | NOT_STARTED | src/modules/document-sender/index.ts | M1, M4 | — |
 | 6 | Appointment Handler | NOT_STARTED | src/modules/appointment-handler/index.ts | M4 | — |
 | 7 | External Form | NOT_STARTED | src/modules/external-form/index.ts | M4 | — |

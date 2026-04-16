@@ -10,16 +10,16 @@ const envSchema = z.object({
   // Redis
   REDIS_URL: z.string().min(1),
 
-  // Telegram
-  TELEGRAM_BOT_TOKEN: z.string().min(1),
+  // Telegram (optional until M9)
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
 
-  // Google Calendar OAuth2
-  GOOGLE_CLIENT_ID: z.string().min(1),
-  GOOGLE_CLIENT_SECRET: z.string().min(1),
-  GOOGLE_REDIRECT_URI: z.string().url(),
+  // Google Calendar OAuth2 (optional until M6)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
 
-  // Claude API
-  ANTHROPIC_API_KEY: z.string().min(1),
+  // Claude API (optional — M4 classifier falls back to rules-only without it)
+  ANTHROPIC_API_KEY: z.string().optional(),
 
   // Encryption (64 hex chars = 32 bytes)
   ENCRYPTION_KEY: z.string().length(64).regex(/^[0-9a-fA-F]+$/),

@@ -24,14 +24,14 @@ export function createAutoApplyWorker(): Worker<AutoApplyJobData> {
       if (paused) {
         log.info({ userId, applicationId }, 'Automation paused for user — marking FAILED');
         const { data: app } = await supabaseAdmin
-          .from('applications')
+          .from('bk_applications')
           .select('retry_count, timeline')
           .eq('id', applicationId)
           .single();
         const timeline = (app?.timeline as any[]) || [];
         timeline.push({ status: 'FAILED', timestamp: new Date().toISOString(), note: 'Skipped: automation paused' });
         await supabaseAdmin
-          .from('applications')
+          .from('bk_applications')
           .update({ status: 'FAILED', timeline })
           .eq('id', applicationId);
         return { status: 'SKIPPED', reason: 'automation_paused' };
@@ -79,7 +79,7 @@ export function createAutoApplyWorker(): Worker<AutoApplyJobData> {
  */
 async function isAutomationPaused(userId: string): Promise<boolean> {
   const { data } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('automation_paused')
     .eq('id', userId)
     .single();
@@ -91,7 +91,7 @@ async function isAutomationPaused(userId: string): Promise<boolean> {
  */
 async function pauseAutomation(userId: string, reason: string): Promise<void> {
   await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .update({ automation_paused: true })
     .eq('id', userId);
   log.info({ userId, reason }, 'Automation paused');
@@ -104,7 +104,7 @@ async function pauseAutomation(userId: string, reason: string): Promise<void> {
  */
 async function handleRetry(applicationId: string, userId: string, listingId: string): Promise<boolean> {
   const { data: app } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('retry_count, timeline')
     .eq('id', applicationId)
     .single();
@@ -116,7 +116,7 @@ async function handleRetry(applicationId: string, userId: string, listingId: str
     const timeline = (app?.timeline as any[]) || [];
     timeline.push({ status: 'CLOSED', timestamp: new Date().toISOString(), note: `Max retries (${MAX_RETRY_COUNT}) exceeded` });
     await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .update({ status: 'CLOSED', timeline })
       .eq('id', applicationId);
     return false;
@@ -128,7 +128,7 @@ async function handleRetry(applicationId: string, userId: string, listingId: str
     const timeline = (app?.timeline as any[]) || [];
     timeline.push(result.timelineEntry);
     await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .update({ status: result.newStatus, retry_count: result.retryCount, timeline })
       .eq('id', applicationId);
 

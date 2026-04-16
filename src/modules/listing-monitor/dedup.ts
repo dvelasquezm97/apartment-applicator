@@ -5,7 +5,7 @@ const log = createChildLogger('listing-monitor:dedup');
 
 export async function isDuplicate(immoscoutId: string): Promise<boolean> {
   const { data, error } = await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .select('id')
     .eq('immoscout_id', immoscoutId)
     .limit(1);
@@ -25,7 +25,7 @@ export async function isDuplicate(immoscoutId: string): Promise<boolean> {
 export async function hasExistingApplication(userId: string, immoscoutId: string): Promise<boolean> {
   // Step 1: find the listing by immoscout_id
   const { data: listings } = await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .select('id')
     .eq('immoscout_id', immoscoutId)
     .limit(1);
@@ -34,7 +34,7 @@ export async function hasExistingApplication(userId: string, immoscoutId: string
 
   // Step 2: check if this user has an application for that listing
   const { data: apps } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('id')
     .eq('user_id', userId)
     .eq('listing_id', listings[0]!.id)
@@ -53,7 +53,7 @@ export async function insertListing(listing: {
   rooms: number | null;
 }): Promise<string> {
   const { data, error } = await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .insert({
       immoscout_id: listing.immoscoutId,
       url: listing.url,

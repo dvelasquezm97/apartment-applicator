@@ -21,6 +21,24 @@ vi.mock('../../src/config/constants.js', () => ({
   },
 }));
 
+vi.mock('../../src/modules/auto-apply/selectors.js', () => ({
+  LISTING: {
+    CONTENT: '#is24-content, .is24-content',
+    REMOVED_INDICATORS: [
+      '.status-message--removed',
+      '.expose--deactivated',
+      'h1:has-text("nicht mehr verfügbar")',
+      'h1:has-text("Dieses Angebot ist nicht mehr")',
+    ],
+    APPLY_BUTTONS: [
+      '[data-testid="contact-message-button"]',
+      '[data-testid="contact-button"]',
+    ],
+  },
+  FORM: {},
+  RESULT: {},
+}));
+
 import { navigateToListing } from '../../src/modules/auto-apply/navigator.js';
 import { detectCaptcha } from '../../src/modules/session/captcha-detector.js';
 import { humanClick } from '../../src/modules/auto-apply/human-delay.js';
@@ -45,8 +63,8 @@ describe('navigateToListing', () => {
     const mockElement = { isVisible: vi.fn().mockResolvedValue(true) };
     const page = createMockPage({
       $: vi.fn().mockImplementation(async (selector: string) => {
-        // Only match apply button selectors, not removed indicators
-        if (selector.includes('sendButton') || selector.includes('Kontaktieren') || selector.includes('Nachricht schreiben') || selector.includes('contactFormButton') || selector.includes('contactButton')) {
+        // Match new apply button selectors
+        if (selector.includes('contact-message-button') || selector.includes('contact-button')) {
           return mockElement;
         }
         return null;
@@ -91,7 +109,7 @@ describe('navigateToListing', () => {
   it('detects listing removed via CSS selector', async () => {
     const page = createMockPage({
       $: vi.fn().mockImplementation(async (sel: string) => {
-        if (sel.includes('deactivated') || sel.includes('not-available')) {
+        if (sel.includes('status-message--removed') || sel.includes('expose--deactivated')) {
           return { isVisible: vi.fn().mockResolvedValue(true) };
         }
         return null;

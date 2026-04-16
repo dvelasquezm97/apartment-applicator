@@ -9,7 +9,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
   server.get('/api/applications', async (request) => {
     const userId = getUserId(request);
     const { data, error } = await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .select('id, status, retry_count, timeline, created_at, updated_at, listing_id')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -19,7 +19,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
     // Fetch listing info for each application
     const listingIds = [...new Set(data.map((a: any) => a.listing_id))];
     const { data: listings } = await supabaseAdmin
-      .from('listings')
+      .from('bk_listings')
       .select('id, title, address, rent, rooms, size, url')
       .in('id', listingIds);
 
@@ -55,7 +55,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
     const { id } = request.params;
 
     const { data, error } = await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .select('*')
       .eq('id', id)
       .eq('user_id', userId)
@@ -67,7 +67,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
 
     // Fetch listing
     const { data: listing } = await supabaseAdmin
-      .from('listings')
+      .from('bk_listings')
       .select('*')
       .eq('id', data.listing_id)
       .single();
@@ -99,7 +99,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
 
     // Verify application belongs to user
     const { data: app } = await supabaseAdmin
-      .from('applications')
+      .from('bk_applications')
       .select('id')
       .eq('id', id)
       .eq('user_id', userId)
@@ -110,7 +110,7 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
     }
 
     const { data: messages } = await supabaseAdmin
-      .from('messages')
+      .from('bk_messages')
       .select('id, direction, content, received_at, processed_at')
       .eq('application_id', id)
       .order('received_at', { ascending: true });
@@ -128,5 +128,5 @@ export async function registerApplicationRoutes(server: FastifyInstance): Promis
 }
 
 function getUserId(request: any): string {
-  return request.headers['x-user-id'] || 'dev-user';
+  return request.headers['x-user-id'] || '00000000-0000-0000-0000-000000000001';
 }

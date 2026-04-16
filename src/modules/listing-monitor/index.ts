@@ -56,7 +56,7 @@ export async function runListingMonitor(userId: string): Promise<{
 
         // Create application record
         const { data: application, error: appError } = await supabaseAdmin
-          .from('applications')
+          .from('bk_applications')
           .insert({
             user_id: userId,
             listing_id: listingId,
@@ -95,7 +95,7 @@ export async function runListingMonitor(userId: string): Promise<{
       } catch (err) {
         // If listing was inserted but downstream failed, delete it so future cycles retry
         if (listingId) {
-          await supabaseAdmin.from('listings').delete().eq('id', listingId);
+          await supabaseAdmin.from('bk_listings').delete().eq('id', listingId);
           stats.newListings--;
           log.warn({ listingId, immoscoutId: listing.immoscoutId }, 'Rolled back listing after downstream failure');
         }

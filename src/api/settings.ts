@@ -10,7 +10,7 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
   server.get('/api/settings', async (request, reply) => {
     const userId = getUserId(request);
     const { data, error } = await supabaseAdmin
-      .from('users')
+      .from('bk_users')
       .select('id, immoscout_email, profile, automation_paused, daily_application_count, daily_application_reset_at, telegram_chat_id, created_at')
       .eq('id', userId)
       .single();
@@ -46,7 +46,7 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
       if (automationPaused !== undefined) updates.automation_paused = automationPaused;
 
       const { error } = await supabaseAdmin
-        .from('users')
+        .from('bk_users')
         .update(updates)
         .eq('id', userId);
 
@@ -67,7 +67,7 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
 
       // Merge with existing profile
       const { data: user } = await supabaseAdmin
-        .from('users')
+        .from('bk_users')
         .select('profile')
         .eq('id', userId)
         .single();
@@ -76,7 +76,7 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
       const mergedProfile = { ...existingProfile, ...request.body };
 
       const { error } = await supabaseAdmin
-        .from('users')
+        .from('bk_users')
         .update({ profile: mergedProfile })
         .eq('id', userId);
 
@@ -95,5 +95,5 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
  */
 function getUserId(request: any): string {
   // Check X-User-Id header for development, or use first user in DB
-  return request.headers['x-user-id'] || 'dev-user';
+  return request.headers['x-user-id'] || '00000000-0000-0000-0000-000000000001';
 }

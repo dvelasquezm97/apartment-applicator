@@ -1,7 +1,7 @@
 # Module 3: Auto-Apply
 
-> Last updated: 2026-04-15
-> Status: COMPLETE
+> Last updated: 2026-04-16
+> Status: COMPLETE (selectors verified against live Immoscout HybridView)
 
 ## Purpose
 
@@ -20,11 +20,29 @@ listing, fills application form, uploads user documents, and submits.
 | src/modules/auto-apply/human-delay.ts | Human simulation: typing, clicking, scrolling, delays |
 | src/workers/auto-apply.worker.ts | BullMQ worker: process apply jobs, retry logic, CAPTCHA pause |
 
+## Contact Form Selectors (verified 2026-04-16)
+
+Immoscout's contact form now opens as a **modal** (`[role="dialog"]`), not an inline form.
+
+| Element | Selector | Notes |
+|---------|----------|-------|
+| Nachricht button | `[data-testid="contact-message-button"]`, `[data-testid="contact-button"]` | Opens modal |
+| Modal form | `[role="dialog"]` | Contains all form fields |
+| Salutation | Salutation select/radio | Always "Herr" |
+| Street | `input[name*="street"]` | Separate field (not combined address) |
+| House number | `input[name*="houseNumber"]` | Separate field |
+| Zip code | `input[name*="zipCode"]` | Separate field |
+| City | `input[name*="city"]` | Separate field |
+| Extra questions | Insolvency/arrears/pets/smoking | Always "Nein" |
+| Profile sharing | Toggle | Always enabled |
+| Submit | `button:has-text("Abschicken")` | Changed from "Senden" |
+| Success | Text: "Nachricht gesendet" | Changed from "erfolgreich" |
+
 ## Inputs
 
 - Authenticated browser page from Module 1
 - Listing URL from the enqueued job
-- User profile data from `users.profile` JSONB
+- User profile data from `bk_users.profile` JSONB (extended with street, houseNumber, zipCode, city, numberOfPersons)
 - User documents from Supabase Storage
 
 ## Outputs
@@ -78,4 +96,5 @@ uploadDocuments(page: Page, documents: Document[]): Promise<void>
 
 ## Open Issues
 
-- CSS selectors need verification against live Immoscout24 — current selectors are based on known patterns but may need tuning after first real run.
+- ~~CSS selectors need verification~~ RESOLVED 2026-04-16: All selectors verified via Arc CDP against live Immoscout HybridView.
+- Extra questions handler assumes "Nein" for all — may need to be configurable per-user in future.

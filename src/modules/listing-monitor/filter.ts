@@ -11,7 +11,7 @@ export async function canApply(userId: string): Promise<boolean> {
   }
 
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('daily_application_count, daily_application_reset_at, automation_paused')
     .eq('id', userId)
     .single();
@@ -33,7 +33,7 @@ export async function canApply(userId: string): Promise<boolean> {
     if (resetAt <= new Date()) {
       count = 0;
       await supabaseAdmin
-        .from('users')
+        .from('bk_users')
         .update({
           daily_application_count: 0,
           daily_application_reset_at: getNextResetTime(),
@@ -53,7 +53,7 @@ export async function canApply(userId: string): Promise<boolean> {
 
 export async function incrementApplicationCount(userId: string): Promise<void> {
   const { data } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('daily_application_count, daily_application_reset_at')
     .eq('id', userId)
     .single();
@@ -67,7 +67,7 @@ export async function incrementApplicationCount(userId: string): Promise<void> {
   }
 
   const { error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .update(update)
     .eq('id', userId);
 

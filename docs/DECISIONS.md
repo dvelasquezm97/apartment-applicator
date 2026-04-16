@@ -1,6 +1,6 @@
 # Architectural Decisions
 
-> Last updated: 2026-04-15
+> Last updated: 2026-04-16
 > Status: ACTIVE
 
 Append-only log. Never delete entries — strike through if reversed.
@@ -115,3 +115,93 @@ output ensures reliable intent extraction from Claude.
 middleware, login page, session management) that blocks testing. All API routes are open
 with a dev-mode X-User-Id header. Supabase Auth will be added when moving to multi-user
 or production.
+
+---
+
+## [2026-04-16] Decision: Use `bk_` prefix for all DB tables
+
+**Options considered:**
+- A) Standard table names (users, listings, applications, etc.)
+- B) Prefixed table names with `bk_` (bk_users, bk_listings, bk_applications, etc.)
+
+**Chosen:** B — `bk_` prefix
+
+**Rationale:** Supabase project "pacific" is a shared project on the personal account. The
+`bk_` prefix avoids collisions with other products that may share the same Supabase project.
+All 10 migration files rewritten. All source code references updated across 16+ files.
+
+---
+
+## [2026-04-16] Decision: Skip auth for pilot — use dev user UUID
+
+**Options considered:**
+- A) Implement Supabase Auth before pilot testing
+- B) Use a fixed dev user UUID (`00000000-0000-0000-0000-000000000001`) with no auth
+
+**Chosen:** B — Fixed dev user UUID
+
+**Rationale:** Migration 00011_dev_seed.sql drops the auth.users FK constraint and inserts
+a dev user directly. This lets the entire M1-M4 pipeline run without any Supabase Auth
+setup. Auth will be added when the pilot is validated and multi-user is needed.
+
+---
+
+## [2026-04-16] Decision: Manual-assist login approach
+
+**Options considered:**
+- A) Full Playwright stealth automated login
+- B) 2captcha or anti-captcha service integration
+- C) Manual-assist: user logs in via real browser, cookies saved and restored
+
+**Chosen:** C — Manual-assist login
+
+**Rationale:** Immoscout24 deploys GeeTest image puzzle CAPTCHA on their SSO login. Even
+with stealth plugin, CAPTCHA triggers on every headless login attempt. CAPTCHA solving
+services add cost, latency, and reliability concerns. Manual login is a one-time event
+(cookies persist for days/weeks), so the UX cost is minimal. Created
+`scripts/manual-login.ts` and `waitForManualCaptchaSolve()` (2 min timeout) for the flow.
+
+---
+
+## [2026-04-16] Decision: Arc browser CDP for real browser testing
+
+**Options considered:**
+- A) Only use Playwright headless for all browser tasks
+- B) Connect to Arc browser via Chrome DevTools Protocol for testing
+
+**Chosen:** B — Arc CDP connection
+
+**Rationale:** Arc browser already has a logged-in Immoscout session with valid cookies.
+Connecting via CDP avoids CAPTCHA entirely and allows live testing of M2/M3 selectors
+against the real site. Used for the full selector verification session that confirmed
+Immoscout's "HybridView" redesign.
+
+---
+
+## [2026-04-16] Decision: Store search URL directly instead of saved searches page
+
+**Options considered:**
+- A) Navigate to Immoscout saved searches page, then scrape each saved search
+- B) Store user's search URL directly, scrape results from that URL
+
+**Chosen:** B — Direct search URL
+
+**Rationale:** Immoscout's saved searches page requires extra navigation and its own set
+of selectors. Storing the user's search URL (e.g., a filtered search for Berlin apartments)
+and scraping results directly is simpler, faster, and more reliable. Added
+`scrapeSearchUrl()` function with pagination support.
+
+---
+
+## [2026-04-16] Decision: Pause M5-M9 until pilot validates core loop
+
+**Options considered:**
+- A) Continue building M5-M9 in sequence
+- B) Stop building new modules, focus on pilot testing M1-M4
+
+**Chosen:** B — Pause new module development
+
+**Rationale:** M1-M4 form the core automation loop (login, find listings, apply, monitor
+inbox). Building M5-M9 without validating this loop risks building on wrong assumptions
+(selectors, flows, timing). The pilot will test with real listings and a real account.
+Resume M5-M9 only after pilot success.

@@ -18,7 +18,7 @@ export async function registerHealthRoutes(server: FastifyInstance): Promise<voi
 
     // Supabase check
     try {
-      const { error } = await supabaseAdmin.from('users').select('id', { count: 'exact', head: true });
+      const { error } = await supabaseAdmin.from('bk_users').select('id', { count: 'exact', head: true });
       checks.supabase = error ? { status: 'error', error: error.message } : { status: 'ok' };
     } catch (err) {
       checks.supabase = { status: 'error', error: (err as Error).message };

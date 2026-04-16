@@ -5,7 +5,7 @@ export async function registerListingRoutes(server: FastifyInstance): Promise<vo
   // GET /api/listings — list discovered listings
   server.get('/api/listings', async () => {
     const { data } = await supabaseAdmin
-      .from('listings')
+      .from('bk_listings')
       .select('id, immoscout_id, url, title, address, rent, size, rooms, status, discovered_at')
       .order('discovered_at', { ascending: false })
       .limit(100);
@@ -30,7 +30,7 @@ export async function registerListingRoutes(server: FastifyInstance): Promise<vo
   server.get<{ Params: { id: string } }>('/api/listings/:id', async (request, reply) => {
     const { id } = request.params;
     const { data, error } = await supabaseAdmin
-      .from('listings')
+      .from('bk_listings')
       .select('*')
       .eq('id', id)
       .single();

@@ -7,7 +7,7 @@ const log = createChildLogger('telegram-bot');
 // TODO: Initialize grammy bot instance
 // Webhook mode in production, polling in development
 
-export const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
+export const bot = new Bot(env.TELEGRAM_BOT_TOKEN ?? 'placeholder');
 
 export async function startBot(): Promise<void> {
   // TODO: Register commands, middleware, start polling or return for webhook

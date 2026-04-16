@@ -1,7 +1,7 @@
 # BerlinKeys — Automated Apartment Application System for Immoscout24
 
-> Status: M1-M4 COMPLETE, Phase A (API + Dashboard) done — ready for end-to-end testing
-> Last updated: 2026-04-15
+> Status: M1-M4 COMPLETE, Phase A (API + Dashboard) done — infrastructure set up, selectors verified, ready for pilot
+> Last updated: 2026-04-16
 > Company: [Aucto](~/Desktop/aucto/) — Agentic-first company
 
 ## Quick Commands

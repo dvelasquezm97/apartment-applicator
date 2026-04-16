@@ -10,7 +10,7 @@ export async function saveCookies(userId: string, cookies: Cookie[]): Promise<vo
   const encrypted = encrypt(json);
 
   const { error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .update({ immoscout_cookies_encrypted: encrypted, updated_at: new Date().toISOString() })
     .eq('id', userId);
 
@@ -24,7 +24,7 @@ export async function saveCookies(userId: string, cookies: Cookie[]): Promise<vo
 
 export async function loadCookies(userId: string): Promise<Cookie[] | null> {
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('immoscout_cookies_encrypted')
     .eq('id', userId)
     .single();

@@ -5,20 +5,34 @@ import { detectCaptcha } from '../session/captcha-detector.js';
 
 const log = createChildLogger('listing-monitor:scraper');
 
-const IMMOSCOUT_SAVED_SEARCH_URL = 'https://www.immobilienscout24.de/meinkonto/gespeichertesuchen';
-
-// Selectors — update here when Immoscout changes their page structure
+/**
+ * Selectors verified 2026-04-16 via Arc CDP against live Immoscout24.
+ * Immoscout now uses a "HybridView" layout with data-testid attributes.
+ */
 const SELECTORS = {
-  savedSearchLink: '.saved-search-list a[href*="/Suche/"], [data-testid="saved-search"] a',
-  listingCard: '.result-list__listing, [data-testid="result-list-entry"], .result-list-entry__data',
-  listingLink: 'a[href*="/expose/"]',
-  listingTitle: '.result-list-entry__brand-title, [data-testid="listing-title"], h2',
-  listingAddress: '.result-list-entry__address, [data-testid="listing-address"]',
-  listingRent: '.result-list-entry__primary-criterion:first-child .font-highlight, [data-testid="listing-price"]',
-  listingSize: '.result-list-entry__primary-criterion:nth-child(2) .font-highlight, [data-testid="listing-size"]',
-  listingRooms: '.result-list-entry__primary-criterion:nth-child(3) .font-highlight, [data-testid="listing-rooms"]',
+  /** Container for all listing cards */
+  listingsGrid: '[data-testid="ListingsGrid"]',
+
+  /** Individual listing card (class-based, excludes touchpoint ads) */
+  listingCard: '.listing-card:not(.touchpoint-card)',
+
+  /** Link to listing detail — uses exposeId query param, NOT /expose/ path */
+  listingLink: 'a[href*="exposeId="]',
+
+  /** Heart button: "Zum Merkzettel hinzufügen" = NOT applied, "vom Merkzettel entfernen" = already applied */
+  heartNotApplied: '.shortlist-star[aria-label="Zum Merkzettel hinzufügen"]',
+  heartAlreadyApplied: '.shortlist-star[aria-label="vom Merkzettel entfernen"]',
+
+  /** Listing details within each card */
+  listingTitle: '[data-testid="headline"]',
+  listingAddress: '[data-testid="hybridViewAddress"]',
+  listingAttributes: '[data-testid="attributes"]',
+
+  /** No results indicator */
   noResults: '.result-list-empty, [data-testid="no-results"]',
-  pagination: '.react-pagination__next, [data-testid="pagination-next"]',
+
+  /** Pagination */
+  paginationNext: '[data-testid="pagination-button-next"]',
 };
 
 export interface ScrapedListing {
@@ -29,6 +43,7 @@ export interface ScrapedListing {
   rent: number | null;
   size: number | null;
   rooms: number | null;
+  alreadyApplied: boolean;
 }
 
 async function humanDelay(min: number, max: number): Promise<void> {
@@ -38,20 +53,13 @@ async function humanDelay(min: number, max: number): Promise<void> {
 
 function parseNumber(text: string | null): number | null {
   if (!text) return null;
-  // German format: 1.100,50 → remove dots (thousands), replace comma with dot (decimal)
   const cleaned = text.replace(/[^\d,.]/g, '');
-  // If has both dot and comma: dot is thousands, comma is decimal (German)
-  // If has only comma: it's decimal
-  // If has only dot: check position — if 3 digits after, it's thousands; otherwise decimal
   let normalized: string;
   if (cleaned.includes(',') && cleaned.includes('.')) {
-    // German: 1.100,50
     normalized = cleaned.replace(/\./g, '').replace(',', '.');
   } else if (cleaned.includes(',')) {
-    // German decimal: 75,5
     normalized = cleaned.replace(',', '.');
   } else if (cleaned.includes('.') && /\.\d{3}$/.test(cleaned)) {
-    // Thousands separator only: 1.100
     normalized = cleaned.replace(/\./g, '');
   } else {
     normalized = cleaned;
@@ -60,15 +68,81 @@ function parseNumber(text: string | null): number | null {
   return isNaN(num) ? null : num;
 }
 
-function extractImmoscoutId(url: string): string | null {
-  const match = url.match(/\/expose\/(\d+)/);
-  return match?.[1] ?? null;
+function extractExposeId(href: string): string | null {
+  // New format: /Suche/controller/exposeNavigation/goToExpose.go?exposeId=167016127&...
+  const match = href.match(/exposeId=(\d+)/);
+  if (match) return match[1] ?? null;
+  // Old format: /expose/12345
+  const oldMatch = href.match(/\/expose\/(\d+)/);
+  return oldMatch?.[1] ?? null;
 }
 
+/**
+ * Scrape listings from a given search URL.
+ * Handles pagination — follows "next page" until no more pages.
+ */
+export async function scrapeSearchUrl(page: Page, searchUrl: string, userId: string): Promise<ScrapedListing[]> {
+  log.info({ userId, searchUrl: searchUrl.substring(0, 80) }, 'Navigating to search URL');
+
+  await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await humanDelay(DELAYS.BETWEEN_PAGES.min, DELAYS.BETWEEN_PAGES.max);
+
+  if (await detectCaptcha(page, userId)) {
+    log.warn({ userId }, 'CAPTCHA detected on search page');
+    return [];
+  }
+
+  const allListings: ScrapedListing[] = [];
+  let pageNum = 1;
+
+  while (true) {
+    log.info({ userId, pageNum }, 'Scraping search results page');
+
+    const noResults = await page.$(SELECTORS.noResults);
+    if (noResults) {
+      log.info({ userId }, 'No listings found');
+      break;
+    }
+
+    const listings = await extractListingsFromPage(page);
+    allListings.push(...listings);
+    log.info({ userId, pageNum, count: listings.length }, 'Listings scraped from page');
+
+    // Check for next page
+    const nextBtn = await page.$(SELECTORS.paginationNext);
+    if (!nextBtn) break;
+
+    const isDisabled = await nextBtn.evaluate((el: Element) =>
+      el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true'
+    );
+    if (isDisabled) break;
+
+    await humanDelay(DELAYS.BETWEEN_PAGES.min, DELAYS.BETWEEN_PAGES.max);
+    await nextBtn.click();
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => {});
+    await humanDelay(DELAYS.BETWEEN_PAGES.min, DELAYS.BETWEEN_PAGES.max);
+
+    if (await detectCaptcha(page, userId)) {
+      log.warn({ userId, pageNum }, 'CAPTCHA detected on pagination');
+      break;
+    }
+
+    pageNum++;
+  }
+
+  log.info({ userId, totalCount: allListings.length }, 'Search scraping complete');
+  return allListings;
+}
+
+/**
+ * Legacy entry point — scrapes from saved searches page.
+ * Kept for backwards compatibility with M2 listing monitor worker.
+ */
 export async function scrapeNewListings(page: Page, userId: string): Promise<ScrapedListing[]> {
   log.info({ userId }, 'Navigating to saved searches');
 
-  await page.goto(IMMOSCOUT_SAVED_SEARCH_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const savedSearchUrl = 'https://www.immobilienscout24.de/meinkonto/gespeichertesuchen';
+  await page.goto(savedSearchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await humanDelay(DELAYS.BETWEEN_PAGES.min, DELAYS.BETWEEN_PAGES.max);
 
   if (await detectCaptcha(page, userId)) {
@@ -77,43 +151,25 @@ export async function scrapeNewListings(page: Page, userId: string): Promise<Scr
   }
 
   // Find saved search links
-  const searchLinks = await page.$$(SELECTORS.savedSearchLink);
+  const searchLinks = await page.$$('a[href*="/Suche/"]');
   if (searchLinks.length === 0) {
     log.warn({ userId }, 'No saved searches found');
     return [];
   }
 
-  // Collect hrefs from all saved searches
   const searchHrefs: string[] = [];
   for (const link of searchLinks) {
     const href = await link.getAttribute('href');
-    if (href) searchHrefs.push(href);
+    if (href && href.includes('/Suche/de/')) searchHrefs.push(href);
   }
 
   log.info({ userId, searchCount: searchHrefs.length }, 'Found saved searches');
 
-  // Iterate all saved searches and collect listings
   const allListings: ScrapedListing[] = [];
-
   for (const href of searchHrefs) {
     const fullUrl = href.startsWith('http') ? href : `https://www.immobilienscout24.de${href}`;
-    await page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await humanDelay(DELAYS.BETWEEN_PAGES.min, DELAYS.BETWEEN_PAGES.max);
-
-    if (await detectCaptcha(page, userId)) {
-      log.warn({ userId, href }, 'CAPTCHA detected on search results page');
-      break;
-    }
-
-    const noResults = await page.$(SELECTORS.noResults);
-    if (noResults) {
-      log.info({ userId, href }, 'No listings in this saved search');
-      continue;
-    }
-
-    const listings = await extractListingsFromPage(page);
+    const listings = await scrapeSearchUrl(page, fullUrl, userId);
     allListings.push(...listings);
-    log.info({ userId, href, count: listings.length }, 'Listings scraped from search');
   }
 
   log.info({ userId, totalCount: allListings.length }, 'All saved searches scraped');
@@ -133,12 +189,14 @@ async function extractListingsFromPage(page: Page): Promise<ScrapedListing[]> {
       const href = await linkEl.getAttribute('href');
       if (!href) continue;
 
-      const immoscoutId = extractImmoscoutId(href);
+      const immoscoutId = extractExposeId(href);
       if (!immoscoutId) continue;
 
-      const url = href.startsWith('http')
-        ? href
-        : `https://www.immobilienscout24.de${href}`;
+      const url = `https://www.immobilienscout24.de/expose/${immoscoutId}`;
+
+      // Check if already applied (red heart)
+      const heartApplied = await card.$(SELECTORS.heartAlreadyApplied);
+      const alreadyApplied = heartApplied !== null;
 
       // Extract listing details
       const titleEl = await card.$(SELECTORS.listingTitle);
@@ -147,16 +205,26 @@ async function extractListingsFromPage(page: Page): Promise<ScrapedListing[]> {
       const addressEl = await card.$(SELECTORS.listingAddress);
       const address = addressEl ? (await addressEl.textContent())?.trim() ?? null : null;
 
-      const rentEl = await card.$(SELECTORS.listingRent);
-      const rent = parseNumber(rentEl ? await rentEl.textContent() : null);
+      // Extract attributes (rent, size, rooms) from the attributes container
+      const attrEl = await card.$(SELECTORS.listingAttributes);
+      let rent: number | null = null;
+      let size: number | null = null;
+      let rooms: number | null = null;
 
-      const sizeEl = await card.$(SELECTORS.listingSize);
-      const size = parseNumber(sizeEl ? await sizeEl.textContent() : null);
+      if (attrEl) {
+        const attrText = await attrEl.textContent() ?? '';
+        // Parse "€1,088  59.67 m²  2 Rooms" or German variants
+        const euroMatch = attrText.match(/€\s*([\d.,]+)/);
+        rent = euroMatch ? parseNumber(euroMatch[1] ?? null) : null;
 
-      const roomsEl = await card.$(SELECTORS.listingRooms);
-      const rooms = parseNumber(roomsEl ? await roomsEl.textContent() : null);
+        const sizeMatch = attrText.match(/([\d.,]+)\s*m²/);
+        size = sizeMatch ? parseNumber(sizeMatch[1] ?? null) : null;
 
-      listings.push({ immoscoutId, url, title, address, rent, size, rooms });
+        const roomsMatch = attrText.match(/([\d.,]+)\s*(Zi|Room|Zimmer)/i);
+        rooms = roomsMatch ? parseNumber(roomsMatch[1] ?? null) : null;
+      }
+
+      listings.push({ immoscoutId, url, title, address, rent, size, rooms, alreadyApplied });
     } catch (err) {
       log.warn({ error: (err as Error).message }, 'Failed to parse listing card — skipping');
     }

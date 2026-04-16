@@ -114,7 +114,7 @@ describe('filter', () => {
       });
 
       vi.mocked(supabaseAdmin.from).mockImplementation((table: string) => {
-        if (table === 'users') {
+        if (table === 'bk_users') {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({

@@ -1,7 +1,7 @@
 # Deployment
 
-> Last updated: 2026-04-14
-> Status: DESIGNED
+> Last updated: 2026-04-16
+> Status: PARTIALLY DEPLOYED (Supabase + local Redis live)
 
 ## Prerequisites
 
@@ -47,21 +47,36 @@ Terminal 3 — Dashboard (Vite dev server):
 npm run dev:web
 ```
 
-### 4. Local Redis
+### 4. Local Redis (running)
 
 ```bash
 # Option A: Docker
 docker run -d -p 6379:6379 redis:7
 
-# Option B: Homebrew (macOS)
+# Option B: Homebrew (macOS) — currently in use
 brew install redis && brew services start redis
 ```
 
 Set `REDIS_URL=redis://localhost:6379` in .env
 
+### 5. Environment variables (optional services)
+
+The following env vars are optional for local development and pilot testing:
+- `TELEGRAM_BOT_TOKEN` — not needed until M9
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — not needed until M6
+- `ANTHROPIC_API_KEY` — only needed for M4 classifier fallback
+
 ## Supabase Setup
 
-### 1. Create project
+### Current Project
+
+- **Project name:** pacific
+- **Project ref:** mxovgbinhedtpnczrciy
+- **Region:** West EU (Ireland)
+- **Account:** Personal (shared project — all tables use `bk_` prefix)
+- **URL:** `https://mxovgbinhedtpnczrciy.supabase.co`
+
+### 1. Create project (already done)
 
 - Go to https://supabase.com/dashboard
 - Create new project
@@ -71,13 +86,17 @@ Set `REDIS_URL=redis://localhost:6379` in .env
 
 ```bash
 # Option A: Supabase CLI
-npx supabase link --project-ref <project-ref>
+npx supabase link --project-ref mxovgbinhedtpnczrciy
 npx supabase db push
 
 # Option B: Manual
 # Copy each migration file from supabase/migrations/ into the Supabase SQL editor
-# Execute in order: 00001 through 00010
+# Execute in order: 00001 through 00011
 ```
+
+**Note:** Migration 00011_dev_seed.sql drops the auth.users FK constraint on bk_users
+and inserts a dev user with UUID `00000000-0000-0000-0000-000000000001`. This enables
+pilot testing without Supabase Auth configured.
 
 ### 3. Create storage buckets
 

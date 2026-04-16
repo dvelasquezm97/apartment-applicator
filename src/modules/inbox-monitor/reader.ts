@@ -222,7 +222,7 @@ async function matchThreadToApplication(thread: ThreadInfo, userId: string): Pro
 
   // Find listing by immoscout_id
   const { data: listing } = await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .select('id')
     .eq('immoscout_id', thread.immoscoutId)
     .single();
@@ -231,7 +231,7 @@ async function matchThreadToApplication(thread: ThreadInfo, userId: string): Pro
 
   // Find application for this user + listing
   const { data: application } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('id')
     .eq('user_id', userId)
     .eq('listing_id', listing.id)
@@ -254,7 +254,7 @@ async function filterUnprocessed(messages: InboxMessage[], applicationId: string
 
   // Only filter against successfully processed messages
   const { data: existing } = await supabaseAdmin
-    .from('messages')
+    .from('bk_messages')
     .select('content, received_at')
     .eq('application_id', applicationId)
     .eq('direction', 'INBOUND')

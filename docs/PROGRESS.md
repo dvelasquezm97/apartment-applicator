@@ -1,6 +1,6 @@
 # Progress
 
-> Last updated: 2026-04-14
+> Last updated: 2026-04-16
 > Status: ACTIVE
 
 ## Session: 2026-04-14 — Project Scaffold
@@ -112,3 +112,48 @@
 - Module 5: Document Sender (reply to inbox thread with user documents)
 - Module 6: Appointment Handler (parse viewing invite, create Google Calendar event)
 - Module 9: Telegram Bot (notifications + /pause /resume /status commands)
+
+## Session: 2026-04-16 — Infrastructure + Live Selector Verification
+
+### What was done
+- Created Supabase project "pacific" (mxovgbinhedtpnczrciy) on personal account, West EU Ireland
+- All DB tables prefixed with `bk_` (shared Supabase project) — 10 migration files rewritten
+- New migration 00011_dev_seed.sql — drops auth.users FK, inserts dev user UUID `00000000-0000-0000-0000-000000000001`
+- Redis via `brew install redis` on localhost:6379
+- .env file created (gitignored) with all credentials
+- Supabase config.toml fixed (removed deprecated [project] section)
+- Login URL changed to SSO: `https://sso.immobilienscout24.de/sso/login?appName=is24main`
+- Two-step SSO flow implemented: email first, submit, password page, submit
+- Added cookie consent dismissal ("Alle akzeptieren")
+- Added GeeTest CAPTCHA detection (Immoscout's image puzzle)
+- Added `waitForManualCaptchaSolve()` — pauses up to 2 min for user to solve CAPTCHA
+- Created `scripts/manual-login.ts` for manual login + cookie save
+- All M2 and M3 selectors verified via Arc browser CDP against live Immoscout24
+- Immoscout redesigned to "HybridView" layout — all old selectors replaced
+- M2 scraper new selectors: `.listing-card`, `a[href*="exposeId="]`, `[data-testid="headline"]`, etc.
+- New `scrapeSearchUrl()` function for direct URL scraping + pagination
+- `ScrapedListing` now has `alreadyApplied` boolean
+- M3 auto-apply new selectors: modal contact form, separate address fields, extra questions handler
+- All Supabase table references updated from `users` to `bk_users`, etc. across 16+ source files
+- Env validation now makes TELEGRAM_BOT_TOKEN, GOOGLE_CLIENT_ID/SECRET, ANTHROPIC_API_KEY optional
+- Dev user ID changed from `'dev-user'` to `'00000000-0000-0000-0000-000000000001'` in all API routes
+- UserProfile type extended with street, houseNumber, zipCode, city, numberOfPersons
+- CAPTCHA detector enhanced with GeeTest selectors + body text detection
+- 117 tests passing, typecheck clean
+
+### Decisions made
+1. Use `bk_` prefix for all DB tables (shared Supabase project)
+2. Skip auth for pilot — use dev user UUID, no Supabase Auth
+3. Manual-assist login approach (CAPTCHA too aggressive for full automation)
+4. Arc browser CDP connection for real browser testing (no CAPTCHA issues)
+5. Store search URL directly instead of relying on saved searches page
+6. Stop building M5-M9 until pilot validates M1-M4 core loop
+
+### Current blockers
+- Immoscout CAPTCHA blocks Playwright stealth browser — must use manual login + cookie restore
+- Login requires Arc/real browser CDP or manual-login.ts for cookie capture
+
+### What to build next
+- End-to-end pilot test of M1-M4 core loop with real listings
+- Validate apply flow against live Immoscout with real account
+- Only after pilot success: M5 Document Sender, M6 Appointment Handler

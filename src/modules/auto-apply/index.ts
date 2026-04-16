@@ -126,7 +126,7 @@ export async function applyToListing(
 /** Fetch listing URL from database. */
 async function fetchListing(listingId: string) {
   const { data, error } = await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .select('url, title, address')
     .eq('id', listingId)
     .single();
@@ -137,7 +137,7 @@ async function fetchListing(listingId: string) {
 /** Fetch user profile from database. */
 async function fetchProfile(userId: string): Promise<UserProfile> {
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('profile')
     .eq('id', userId)
     .single();
@@ -148,7 +148,7 @@ async function fetchProfile(userId: string): Promise<UserProfile> {
 /** Fetch user documents for upload. Maps snake_case DB rows to camelCase UserDocument. */
 async function fetchDocuments(userId: string): Promise<UserDocument[]> {
   const { data, error } = await supabaseAdmin
-    .from('documents')
+    .from('bk_documents')
     .select('*')
     .eq('user_id', userId)
     .order('uploaded_at', { ascending: true });
@@ -168,7 +168,7 @@ async function transitionToApplied(applicationId: string, note: string): Promise
   const result = transition('APPLYING', 'APPLIED', 0, note);
 
   const { data: app } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('timeline')
     .eq('id', applicationId)
     .single();
@@ -177,7 +177,7 @@ async function transitionToApplied(applicationId: string, note: string): Promise
   timeline.push(result.timelineEntry);
 
   await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .update({ status: result.newStatus, timeline })
     .eq('id', applicationId);
 }
@@ -185,7 +185,7 @@ async function transitionToApplied(applicationId: string, note: string): Promise
 /** Transition application to FAILED status. */
 async function transitionToFailed(applicationId: string, note: string): Promise<void> {
   const { data: app } = await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .select('retry_count, timeline')
     .eq('id', applicationId)
     .single();
@@ -196,7 +196,7 @@ async function transitionToFailed(applicationId: string, note: string): Promise<
   timeline.push(result.timelineEntry);
 
   await supabaseAdmin
-    .from('applications')
+    .from('bk_applications')
     .update({ status: result.newStatus, retry_count: result.retryCount, timeline })
     .eq('id', applicationId);
 }
@@ -204,7 +204,7 @@ async function transitionToFailed(applicationId: string, note: string): Promise<
 /** Mark a listing as delisted. */
 async function markListingDelisted(listingId: string): Promise<void> {
   await supabaseAdmin
-    .from('listings')
+    .from('bk_listings')
     .update({ status: 'delisted' })
     .eq('id', listingId);
 }

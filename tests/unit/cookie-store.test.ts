@@ -49,7 +49,7 @@ describe('cookie-store', () => {
 
       await saveCookies('user-1', mockCookies);
 
-      expect(supabaseAdmin.from).toHaveBeenCalledWith('users');
+      expect(supabaseAdmin.from).toHaveBeenCalledWith('bk_users');
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           immoscout_cookies_encrypted: expect.any(String),

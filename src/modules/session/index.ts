@@ -87,7 +87,7 @@ export async function isSessionHealthy(userId: string): Promise<boolean> {
 
 async function getUser(userId: string) {
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('bk_users')
     .select('immoscout_email, immoscout_password_encrypted')
     .eq('id', userId)
     .single();
