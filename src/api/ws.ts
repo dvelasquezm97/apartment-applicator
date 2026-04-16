@@ -220,6 +220,13 @@ function handleExtensionConnection(socket: WSocket, userId: string): void {
     try {
       const data = typeof raw === 'string' ? raw : raw.toString('utf-8');
       const event: ExtensionEvent = JSON.parse(data);
+
+      // Keepalive ping — respond with pong, don't forward to listeners
+      if (event.type === 'ping') {
+        socket.send(JSON.stringify({ type: 'pong' }));
+        return;
+      }
+
       log.debug({ userId, type: event.type }, 'Extension event received');
       notifyExtensionEventListeners(userId, event);
     } catch (err) {

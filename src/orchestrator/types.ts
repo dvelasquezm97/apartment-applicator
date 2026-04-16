@@ -92,6 +92,11 @@ export interface ErrorEvent {
   message: string;
 }
 
+/** Keepalive ping from the extension to prevent MV3 service worker suspension. */
+export interface PingEvent {
+  type: 'ping';
+}
+
 export type ExtensionEvent =
   | ConnectedEvent
   | ListingsScrapedEvent
@@ -101,7 +106,8 @@ export type ExtensionEvent =
   | ApplyFailedEvent
   | CaptchaDetectedEvent
   | CaptchaResolvedEvent
-  | ErrorEvent;
+  | ErrorEvent
+  | PingEvent;
 
 // --- Backend → Dashboard (progress) ---
 

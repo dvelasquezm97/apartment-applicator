@@ -1,19 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useWebSocket, type ListingResultUpdate } from '../hooks/useWebSocket.js';
-import { useStopApply, useApplyStatus } from '../hooks/useApi.js';
+import { useStopApply, useStartApply, useApplyStatus } from '../hooks/useApi.js';
 
 const STATUS_LABELS: Record<string, string> = {
   idle: 'Idle',
-  scraping: 'Scraping listings...',
-  applying: 'Applying...',
-  paused: 'Paused (CAPTCHA)',
-  done: 'Done',
+  scraping: 'Scanning listings...',
+  applying: 'Applying to apartments...',
+  paused: 'Paused — CAPTCHA detected. Please solve it in your browser.',
+  done: 'Session complete',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   idle: 'bg-gray-100 text-gray-700',
   scraping: 'bg-blue-100 text-blue-700',
-  applying: 'bg-yellow-100 text-yellow-800',
+  applying: 'bg-green-100 text-green-700',
   paused: 'bg-orange-100 text-orange-800',
   done: 'bg-green-100 text-green-700',
 };
@@ -50,108 +50,144 @@ function ResultLabel({ status }: { status: ListingResultUpdate['status'] }) {
 export function LiveFeed() {
   const { progress, listingResults, connected } = useWebSocket();
   const { data: applyStatus } = useApplyStatus();
+  const startApply = useStartApply();
   const stopApply = useStopApply();
   const listEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when new results arrive
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [listingResults.length]);
 
   const extensionConnected = applyStatus?.extensionConnected ?? false;
+  const isRunning = progress.status !== 'idle' && progress.status !== 'done';
+  const isIdle = progress.status === 'idle' || progress.status === 'done';
 
   return (
     <div>
-      {/* Header row */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Live Feed</h2>
         <div className="flex items-center gap-3">
-          {/* Extension status */}
           <div className="flex items-center gap-1.5">
-            <div
-              className={`w-2.5 h-2.5 rounded-full ${
-                extensionConnected ? 'bg-green-500' : 'bg-red-500'
-              }`}
-            />
+            <div className={`w-2.5 h-2.5 rounded-full ${extensionConnected ? 'bg-green-500' : 'bg-red-500'}`} />
             <span className="text-xs text-gray-500">
               Extension {extensionConnected ? 'connected' : 'disconnected'}
             </span>
           </div>
-
-          {/* WebSocket status */}
           <div className="flex items-center gap-1.5">
-            <div
-              className={`w-2.5 h-2.5 rounded-full ${
-                connected ? 'bg-green-500' : 'bg-gray-400'
-              }`}
-            />
-            <span className="text-xs text-gray-500">
-              {connected ? 'Live' : 'Reconnecting...'}
-            </span>
+            <div className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span className="text-xs text-gray-500">{connected ? 'Live' : 'Reconnecting...'}</span>
           </div>
         </div>
       </div>
+
+      {/* Action card — Start or Status */}
+      {isIdle && (
+        <div className="bg-white rounded-lg border p-8 mb-6 text-center">
+          {!extensionConnected ? (
+            <>
+              <div className="text-red-500 text-4xl mb-3">{'🔌'}</div>
+              <h3 className="text-lg font-semibold mb-2">Extension not connected</h3>
+              <p className="text-gray-500 text-sm mb-4">
+                Make sure the BerlinKeys Chrome extension is installed and shows "Connected" in its popup.
+                Open any Immoscout24 page to activate it.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-4xl mb-3">{'🏠'}</div>
+              <h3 className="text-lg font-semibold mb-2">Ready to apply</h3>
+              <p className="text-gray-500 text-sm mb-6">
+                The extension is connected. Click below to start scanning your search and applying to new apartments automatically.
+              </p>
+              <button
+                onClick={() => startApply.mutate()}
+                disabled={startApply.isPending}
+                className="bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {startApply.isPending ? 'Starting...' : 'Start Applying'}
+              </button>
+              {startApply.isError && (
+                <p className="text-red-500 text-sm mt-3">
+                  {(startApply.error as Error)?.message || 'Failed to start'}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border p-4 text-center">
-          <p className="text-3xl font-bold text-green-600">{progress.applied}</p>
-          <p className="text-sm text-gray-500">Applied</p>
-        </div>
-        <div className="bg-white rounded-lg border p-4 text-center">
-          <p className="text-3xl font-bold text-red-600">{progress.failed}</p>
-          <p className="text-sm text-gray-500">Failed</p>
-        </div>
-        <div className="bg-white rounded-lg border p-4 text-center">
-          <p className="text-3xl font-bold text-gray-500">{progress.skipped}</p>
-          <p className="text-sm text-gray-500">Skipped</p>
-        </div>
-      </div>
-
-      {/* Status + current listing */}
-      <div className="bg-white rounded-lg border p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span
-              className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                STATUS_COLORS[progress.status] ?? STATUS_COLORS.idle
-              }`}
-            >
-              {STATUS_LABELS[progress.status] ?? progress.status}
-            </span>
-            {progress.currentListing && (
-              <span className="text-sm text-gray-600 truncate max-w-xs">
-                {progress.currentListing}
-              </span>
-            )}
+      {(isRunning || listingResults.length > 0) && (
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <p className="text-3xl font-bold text-green-600">{progress.applied}</p>
+            <p className="text-sm text-gray-500">Applied</p>
           </div>
-          <button
-            onClick={() => stopApply.mutate()}
-            disabled={stopApply.isPending || progress.status === 'idle' || progress.status === 'done'}
-            className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {stopApply.isPending ? 'Stopping...' : 'Stop'}
-          </button>
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <p className="text-3xl font-bold text-red-600">{progress.failed}</p>
+            <p className="text-sm text-gray-500">Failed</p>
+          </div>
+          <div className="bg-white rounded-lg border p-4 text-center">
+            <p className="text-3xl font-bold text-gray-500">{progress.skipped}</p>
+            <p className="text-sm text-gray-500">Skipped</p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Status bar + Stop button */}
+      {isRunning && (
+        <div className="bg-white rounded-lg border p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${STATUS_COLORS[progress.status] ?? STATUS_COLORS.idle}`}>
+                {STATUS_LABELS[progress.status] ?? progress.status}
+              </span>
+              {progress.currentListing && (
+                <span className="text-sm text-gray-600 truncate max-w-md">
+                  {progress.currentListing}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => stopApply.mutate()}
+              disabled={stopApply.isPending}
+              className="bg-red-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+            >
+              {stopApply.isPending ? 'Stopping...' : 'Stop'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Done summary */}
+      {progress.status === 'done' && listingResults.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-green-800">Session complete</h3>
+              <p className="text-sm text-green-700">
+                Applied to {progress.applied} apartments. {progress.failed > 0 ? `${progress.failed} failed. ` : ''}
+                {progress.skipped > 0 ? `${progress.skipped} skipped (already applied).` : ''}
+              </p>
+            </div>
+            <button
+              onClick={() => startApply.mutate()}
+              disabled={startApply.isPending || !extensionConnected}
+              className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+            >
+              Run Again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Results list */}
-      <div className="bg-white rounded-lg border">
-        <div className="px-4 py-3 border-b">
-          <h3 className="font-semibold text-sm text-gray-700">
-            Results ({listingResults.length})
-          </h3>
-        </div>
-
-        {listingResults.length === 0 ? (
-          <div className="px-4 py-8 text-center">
-            <p className="text-gray-400 text-sm">
-              {progress.status === 'idle'
-                ? 'No active session. Start applying from the dashboard or onboarding.'
-                : 'Waiting for results...'}
-            </p>
+      {listingResults.length > 0 && (
+        <div className="bg-white rounded-lg border">
+          <div className="px-4 py-3 border-b">
+            <h3 className="font-semibold text-sm text-gray-700">Results ({listingResults.length})</h3>
           </div>
-        ) : (
           <div className="divide-y max-h-[60vh] overflow-y-auto">
             {listingResults.map((result, index) => (
               <div key={`${result.listingId}-${index}`} className="px-4 py-3 flex items-start gap-3">
@@ -169,8 +205,8 @@ export function LiveFeed() {
             ))}
             <div ref={listEndRef} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

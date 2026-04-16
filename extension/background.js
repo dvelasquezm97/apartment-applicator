@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
-const BK_DEFAULT_WS_URL = 'ws://localhost:3000/ws?role=extension&token=dev-token&userId=00000000-0000-0000-0000-000000000001';
+const BK_DEFAULT_WS_URL = 'wss://berlinkeys-api-production.up.railway.app/ws?role=extension&token=dev-token&userId=00000000-0000-0000-0000-000000000001';
 const RECONNECT_DELAY_MS = 5000;
 const EXTENSION_VERSION = '0.1.0';
 let ws = null;
@@ -22,6 +22,29 @@ let state = 'disconnected';
 let stats = { applied: 0, failed: 0, skipped: 0 };
 let reconnectTimer = null;
 let activeTabId = null;
+// ---------------------------------------------------------------------------
+// Keep-alive: prevent MV3 service worker from going idle and killing the WS
+// ---------------------------------------------------------------------------
+const KEEPALIVE_ALARM = 'bk-keepalive';
+const KEEPALIVE_INTERVAL_MIN = 0.4; // ~24 seconds (minimum Chrome allows is 0.5 in production, but we set it low and Chrome clamps it)
+function startKeepAlive() {
+    chrome.alarms.create(KEEPALIVE_ALARM, { periodInMinutes: KEEPALIVE_INTERVAL_MIN });
+}
+function stopKeepAlive() {
+    chrome.alarms.clear(KEEPALIVE_ALARM);
+}
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === KEEPALIVE_ALARM) {
+        // Send a ping to keep the WebSocket alive
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+        }
+        else if (!ws || ws.readyState === WebSocket.CLOSED) {
+            // WebSocket died — reconnect immediately
+            connect();
+        }
+    }
+});
 // ---------------------------------------------------------------------------
 // WebSocket lifecycle
 // ---------------------------------------------------------------------------
@@ -50,6 +73,7 @@ async function connect() {
     ws.onopen = () => {
         console.log('[BerlinKeys] WebSocket connected');
         setState('connected');
+        startKeepAlive();
         // Find an active immoscout tab to report tabId
         chrome.tabs.query({ url: '*://www.immobilienscout24.de/*' }, (tabs) => {
             if (tabs.length > 0 && tabs[0].id != null) {
@@ -82,6 +106,7 @@ async function connect() {
         console.log('[BerlinKeys] WebSocket closed');
         ws = null;
         setState('disconnected');
+        stopKeepAlive();
         scheduleReconnect();
     };
 }
@@ -90,6 +115,7 @@ function disconnect() {
         clearTimeout(reconnectTimer);
         reconnectTimer = null;
     }
+    stopKeepAlive();
     if (ws) {
         ws.onclose = null; // prevent auto-reconnect
         ws.close();
