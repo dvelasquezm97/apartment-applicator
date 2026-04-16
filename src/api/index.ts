@@ -6,6 +6,7 @@ import { registerDocumentRoutes } from './documents.js';
 import { registerSettingsRoutes } from './settings.js';
 import { registerStatsRoutes } from './stats.js';
 import { registerWebhookRoutes } from './webhooks.js';
+import { registerApplyRoutes } from './apply.js';
 
 export async function registerAllRoutes(server: FastifyInstance): Promise<void> {
   await registerHealthRoutes(server);
@@ -15,4 +16,5 @@ export async function registerAllRoutes(server: FastifyInstance): Promise<void> 
   await registerSettingsRoutes(server);
   await registerStatsRoutes(server);
   await registerWebhookRoutes(server);
+  await registerApplyRoutes(server);
 }

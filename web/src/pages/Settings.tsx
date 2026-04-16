@@ -21,11 +21,14 @@ export function Settings() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [profile, setProfile] = useState<Record<string, any>>({});
+  const [searchUrl, setSearchUrl] = useState('');
+  const [searchUrlSaved, setSearchUrlSaved] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setEmail(settings.immoscoutEmail || '');
       setProfile(settings.profile || {});
+      setSearchUrl(settings.searchUrl || '');
     }
   }, [settings]);
 
@@ -40,6 +43,12 @@ export function Settings() {
 
   const handleSaveProfile = async () => {
     await updateProfile.mutateAsync(profile);
+  };
+
+  const handleSaveSearchUrl = async () => {
+    setSearchUrlSaved(false);
+    await updateSettings.mutateAsync({ searchUrl });
+    setSearchUrlSaved(true);
   };
 
   const handleTogglePause = async () => {
@@ -102,6 +111,31 @@ export function Settings() {
             {updateSettings.isPending ? 'Saving...' : 'Save Credentials'}
           </button>
           {updateSettings.isSuccess && <span className="text-sm text-green-600 ml-2">Saved!</span>}
+        </div>
+      </div>
+
+      {/* Search URL */}
+      <div className="bg-white rounded-lg border p-4">
+        <h3 className="font-semibold mb-1">Search URL</h3>
+        <p className="text-sm text-gray-500 mb-3">Your Immoscout24 search URL — BerlinKeys monitors this for new listings.</p>
+        <div className="space-y-3 max-w-2xl">
+          <input
+            type="url"
+            value={searchUrl}
+            onChange={e => { setSearchUrl(e.target.value); setSearchUrlSaved(false); }}
+            placeholder="https://www.immobilienscout24.de/Suche/..."
+            className="w-full border rounded px-3 py-2 text-sm"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSaveSearchUrl}
+              disabled={updateSettings.isPending || !searchUrl}
+              className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              {updateSettings.isPending ? 'Saving...' : 'Save Search URL'}
+            </button>
+            {searchUrlSaved && <span className="text-sm text-green-600">Saved!</span>}
+          </div>
         </div>
       </div>
 

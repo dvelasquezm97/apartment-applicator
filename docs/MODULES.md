@@ -16,7 +16,7 @@
 | 7 | External Form | NOT_STARTED | src/modules/external-form/index.ts | M4 | — |
 | 8 | Manual Form Upload | NOT_STARTED | src/modules/manual-form-upload/index.ts | M7 | — |
 | 9 | Telegram Bot | NOT_STARTED | src/modules/telegram-bot/index.ts | — | — |
-| 10 | Web Dashboard | IN_PROGRESS | src/modules/dashboard/index.ts | — | API routes + React pages implemented, no auth yet |
+| 10 | Web Dashboard | IN_PROGRESS | src/modules/dashboard/index.ts | — | API + pages + onboarding wizard + live feed done; Chrome extension built; no auth yet |
 
 ## Status Values
 
@@ -24,6 +24,15 @@
 - **IN_PROGRESS** — Actively being built
 - **COMPLETE** — Feature-complete and tested
 - **BROKEN** — Was working, now failing — see docs/KNOWN_ISSUES.md
+
+## Chrome Extension
+
+The Chrome Manifest V3 extension (`extension/`) is a companion to M10 Dashboard.
+It runs in the user's real browser, automating Immoscout24 interactions via DOM
+scripting. The backend orchestrator communicates with it over WebSocket.
+
+Key files: `extension/background.ts`, `extension/content.ts`, `extension/popup.html`,
+`extension/popup.ts`, `extension/manifest.json`.
 
 ## Build Order
 

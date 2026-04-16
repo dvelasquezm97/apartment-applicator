@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { registerAllRoutes } from './api/index.js';
+import { registerWebSocketPlugin } from './api/ws.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,9 @@ async function start(): Promise<void> {
       wildcard: false,
     });
   }
+
+  // WebSocket support (must register before routes)
+  await registerWebSocketPlugin(server);
 
   // Register API routes
   await registerAllRoutes(server);

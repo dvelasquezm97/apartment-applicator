@@ -1,6 +1,6 @@
 # BerlinKeys — Automated Apartment Application System for Immoscout24
 
-> Status: M1-M4 COMPLETE, Phase A (API + Dashboard) done — infrastructure set up, selectors verified, ready for pilot
+> Status: M1-M4 COMPLETE, Phase A done, Chrome Extension + Onboarding + Live Feed built — ready for pilot
 > Last updated: 2026-04-16
 > Company: [Aucto](~/Desktop/aucto/) — Agentic-first company
 
@@ -34,7 +34,7 @@
 ## Module Status
 M1 Session COMPLETE | M2 Listing Monitor COMPLETE | M3 Auto-Apply COMPLETE | M4 Inbox Monitor COMPLETE
 M5 Doc Sender NOT_STARTED | M6 Appointment NOT_STARTED | M7 External Form NOT_STARTED
-M8 Manual Form NOT_STARTED | M9 Telegram NOT_STARTED | M10 Dashboard IN_PROGRESS (API + pages done, no auth)
+M8 Manual Form NOT_STARTED | M9 Telegram NOT_STARTED | M10 Dashboard IN_PROGRESS (API + pages + onboarding + live feed + Chrome extension done, no auth)
 
 ## Session Rituals
 - Start: `/start-session` — reads context, asks which module to work on

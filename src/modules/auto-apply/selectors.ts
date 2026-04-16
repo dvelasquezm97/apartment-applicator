@@ -22,6 +22,9 @@ export const LISTING = {
   APPLY_BUTTONS: [
     '[data-testid="contact-message-button"]',
     '[data-testid="contact-button"]',
+    'button:has-text("Nachricht")',
+    'button:has-text("Interesse bekunden")',
+    'a:has-text("Interesse bekunden")',
   ],
 } as const;
 

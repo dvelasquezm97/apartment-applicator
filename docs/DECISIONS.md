@@ -205,3 +205,109 @@ and scraping results directly is simpler, faster, and more reliable. Added
 inbox). Building M5-M9 without validating this loop risks building on wrong assumptions
 (selectors, flows, timing). The pilot will test with real listings and a real account.
 Resume M5-M9 only after pilot success.
+
+---
+
+## [2026-04-16] Decision: Chrome Extension over server-side Playwright for apply flow
+
+**Options considered:**
+- A) Continue using Playwright stealth headless browser for all automation
+- B) Build a Chrome Manifest V3 extension that runs in the user's real browser
+
+**Chosen:** B — Chrome Extension
+
+**Rationale:** Immoscout's GeeTest CAPTCHA reliably blocks headless Playwright, even with
+stealth plugins. A Chrome extension runs in the user's actual browser session where they
+are already logged in — no CAPTCHA, no cookie capture needed, no stealth evasion. The
+extension communicates with the backend via WebSocket for orchestration.
+
+---
+
+## [2026-04-16] Decision: WebSocket for real-time extension/dashboard communication
+
+**Options considered:**
+- A) HTTP polling from extension and dashboard
+- B) Server-Sent Events (SSE) for one-way updates
+- C) WebSocket for bidirectional real-time communication
+
+**Chosen:** C — WebSocket via @fastify/websocket
+
+**Rationale:** The extension needs to receive commands (scrape, navigate, apply) AND send
+events back (results, errors, CAPTCHA detected). The dashboard needs real-time progress
+updates. WebSocket provides bidirectional communication for both. The `/ws` endpoint
+accepts a `role` query parameter (extension or dashboard) to route messages correctly.
+
+---
+
+## [2026-04-16] Decision: Extension popup shows live stats
+
+**Options considered:**
+- A) Extension has no UI (background-only)
+- B) Extension popup shows connection status only
+- C) Extension popup shows live stats (applied/failed/skipped)
+
+**Chosen:** C — Full stats popup
+
+**Rationale:** Users want visibility into what the extension is doing without opening the
+dashboard. The popup shows applied/failed/skipped counts and connection status. Minimal
+overhead since stats are already tracked in memory by the background script.
+
+---
+
+## [2026-04-16] Decision: Browser notifications for CAPTCHA alerts
+
+**Options considered:**
+- A) Only show CAPTCHA status in dashboard
+- B) Browser notifications via Chrome extension API
+
+**Chosen:** B — Browser notifications
+
+**Rationale:** CAPTCHA requires immediate user attention. Browser notifications are visible
+even when the user is in another tab or window. The extension uses
+`chrome.notifications.create()` when CAPTCHA is detected, prompting the user to solve it.
+
+---
+
+## [2026-04-16] Decision: Stop on extension disconnect
+
+**Options considered:**
+- A) Continue apply loop and retry extension connection
+- B) Pause apply loop and wait for reconnect
+- C) Stop apply loop immediately when extension disconnects
+
+**Chosen:** C — Immediate stop
+
+**Rationale:** Without the extension, the orchestrator cannot execute any browser commands.
+Retrying or waiting would leave the loop in a broken state. Stopping immediately is the
+safest option — the user can restart when the extension reconnects. The orchestrator
+checks extension connection status before each apply iteration.
+
+---
+
+## [2026-04-16] Decision: 4-step onboarding wizard
+
+**Options considered:**
+- A) Manual setup via Settings page
+- B) Guided onboarding wizard
+
+**Chosen:** B — 4-step wizard (Profile → Search URL → Install Extension → Start Applying)
+
+**Rationale:** BerlinKeys targets non-technical apartment seekers. A guided wizard reduces
+setup friction: users fill their profile, paste their Immoscout search URL, install the
+extension, and start applying — all in one flow. The dashboard redirects to onboarding
+if `onboarding_complete` is false.
+
+---
+
+## [2026-04-16] Decision: Live feed page with WebSocket-driven updates
+
+**Options considered:**
+- A) Poll API for apply status
+- B) Real-time WebSocket feed
+
+**Chosen:** B — WebSocket live feed
+
+**Rationale:** Polling would create unnecessary load and latency. The WebSocket connection
+already exists for extension communication — the dashboard connects with `role=dashboard`
+and receives the same progress events. The Live Feed page shows applied/failed/skipped
+counts, a status badge, a scrolling results list, and a stop button.

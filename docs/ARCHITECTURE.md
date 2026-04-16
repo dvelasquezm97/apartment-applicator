@@ -1,45 +1,72 @@
 # Architecture
 
-> Last updated: 2026-04-14
-> Status: DESIGNED
+> Last updated: 2026-04-16
+> Status: DESIGNED + EXTENSION LAYER ADDED
 
 ## System Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        EXTERNAL SERVICES                            │
-│                                                                     │
-│   ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐ │
-│   │  Immoscout24  │  │   Telegram   │  │    Google Calendar       │ │
-│   │  (browser UI) │  │   Bot API    │  │    (googleapis)          │ │
-│   └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘ │
-└──────────┼─────────────────┼───────────────────────┼───────────────┘
-           │ Playwright      │ grammy webhook         │ OAuth2
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        EXTERNAL SERVICES                                  │
+│                                                                          │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐      │
+│   │  Immoscout24  │  │   Telegram   │  │    Google Calendar       │      │
+│   │  (browser UI) │  │   Bot API    │  │    (googleapis)          │      │
+│   └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘      │
+└──────────┼─────────────────┼───────────────────────┼────────────────────┘
+           │                 │ grammy webhook         │ OAuth2
            │                 │                        │
-┌──────────┼─────────────────┼───────────────────────┼───────────────┐
-│          │           API PROCESS (src/index.ts)     │               │
-│          │                 │                        │               │
-│          │    ┌────────────┴────────────┐           │               │
-│          │    │    Fastify Server       │           │               │
-│          │    │    ├── /health          │           │               │
-│          │    │    ├── /api/*           ├───────────┘               │
-│          │    │    ├── /admin/queues    │                           │
-│          │    │    └── /webhooks/tg     │                           │
-│          │    └────────────┬────────────┘                           │
-│          │                 │                                        │
-│          │    ┌────────────┴────────────┐                           │
-│          │    │   Telegram Bot (grammy) │                           │
-│          │    │   /status /pause        │                           │
-│          │    │   /resume /screenshot   │                           │
-│          │    └─────────────────────────┘                           │
-│          │                                                          │
-│  ┌───────┴──────────────────────────────────────────────────┐      │
-│  │                   React Dashboard                         │      │
-│  │  (Vite build served by @fastify/static in production)     │      │
-│  │  Pages: Overview | Applications | Inbox | Appointments    │      │
-│  │         Documents | Profile | Settings | Queue | Logs     │      │
-│  └───────────────────────────────────────────────────────────┘      │
-└─────────────────────────────┬──────────────────────────────────────┘
+     ┌─────┴──────────────┐  │                        │
+     │  Chrome Extension   │  │                        │
+     │  (Manifest V3)      │  │                        │
+     │  ├── background.ts  │  │                        │
+     │  ├── content.ts     │  │                        │
+     │  └── popup.ts       │  │                        │
+     └─────┬──────────────┘  │                        │
+           │ WebSocket        │                        │
+           │                  │                        │
+┌──────────┼──────────────────┼───────────────────────┼───────────────────┐
+│          │           API PROCESS (src/index.ts)      │                   │
+│          │                  │                        │                   │
+│          │    ┌─────────────┴────────────┐           │                   │
+│          │    │    Fastify Server        │           │                   │
+│          │    │    ├── /health           │           │                   │
+│          │    │    ├── /api/*            ├───────────┘                   │
+│          │    │    ├── /api/apply/*      │  (start/stop/status)          │
+│          │    │    ├── /ws              │  (WebSocket upgrade)           │
+│          │    │    ├── /admin/queues     │                               │
+│          │    │    └── /webhooks/tg      │                               │
+│          │    └─────────────┬────────────┘                               │
+│          │                  │                                            │
+│          │    ┌─────────────┴────────────┐                               │
+│          │    │   WebSocket Hub          │                               │
+│          │    │   (src/api/ws.ts)        │                               │
+│          │    │   extension ↔ dashboard  │                               │
+│          │    │   event routing          │                               │
+│          │    └─────────────┬────────────┘                               │
+│          │                  │                                            │
+│          │    ┌─────────────┴────────────┐                               │
+│          │    │   Apply Loop Orchestrator │                               │
+│          │    │   (src/orchestrator/      │                               │
+│          │    │    apply-loop.ts)         │                               │
+│          │    │   scrape→filter→apply     │                               │
+│          │    │   CAPTCHA pause, daily cap│                               │
+│          │    └─────────────┬────────────┘                               │
+│          │                  │                                            │
+│          │    ┌─────────────┴────────────┐                               │
+│          │    │   Telegram Bot (grammy)  │                               │
+│          │    │   /status /pause         │                               │
+│          │    │   /resume /screenshot    │                               │
+│          │    └──────────────────────────┘                               │
+│          │                                                               │
+│  ┌───────┴───────────────────────────────────────────────────────┐      │
+│  │                   React Dashboard                              │      │
+│  │  (Vite build served by @fastify/static in production)          │      │
+│  │  Pages: Overview | Applications | Inbox | Appointments         │      │
+│  │         Documents | Profile | Settings | Queue | Logs          │      │
+│  │         Onboarding (4-step wizard) | Live Feed (WS-driven)     │      │
+│  └───────────────────────────────────────────────────────────────┘      │
+└──────────────────────────────┬──────────────────────────────────────────┘
                               │
                     ┌─────────┴─────────┐
                     │      Redis        │
@@ -156,6 +183,51 @@ Map known fields to user profile data
       │
       └── 24h timeout → skip field, resume job, notify user
 ```
+
+### Chrome Extension Flow (replaces server-side Playwright for apply)
+
+```
+1. User completes onboarding wizard (Dashboard)
+   │ Profile data saved, search URL configured
+   │ Extension installed and connected via WebSocket
+   │
+   ▼
+2. User clicks "Start Applying" → POST /api/apply/start
+   │ ApplyLoop orchestrator begins
+   │
+   ▼
+3. ApplyLoop sends commands to extension via WebSocket
+   │ extension:scrape-listings → extension scrapes search URL in real browser
+   │ extension:navigate → extension opens listing page
+   │ extension:apply → content.ts fills form + submits
+   │
+   ├── Success → record APPLIED, broadcast progress to dashboard
+   │   Human delay 30-60s before next listing
+   │
+   ├── CAPTCHA detected → extension sends browser notification
+   │   Orchestrator pauses, waits for user to solve
+   │
+   └── Extension disconnects → orchestrator stops gracefully
+   │
+   ▼
+4. Dashboard Live Feed receives real-time updates via WebSocket
+   │ applied/failed/skipped counts, scrolling results list
+```
+
+### WebSocket Connection Topology
+
+```
+Chrome Extension ──(ws)──► Fastify /ws?role=extension
+                                    │
+                            WebSocket Hub (ws.ts)
+                            waitForExtensionEvent()
+                                    │
+React Dashboard  ──(ws)──► Fastify /ws?role=dashboard
+```
+
+- Extension connects with `role=extension` — receives commands, sends events
+- Dashboard connects with `role=dashboard` — receives progress broadcasts
+- `waitForExtensionEvent()` creates a promise that resolves when the extension responds
 
 ## Browser Pool Design
 

@@ -225,6 +225,38 @@ curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 - Send any message
 - The bot registers the telegram_chat_id automatically via /start command
 
+## Chrome Extension Distribution
+
+### Local Development (current)
+
+The extension is loaded as an unpacked extension:
+1. Open Chrome → `chrome://extensions`
+2. Enable "Developer mode" (top right toggle)
+3. Click "Load unpacked" → select the `extension/` directory
+4. Extension icon appears in toolbar — click to see popup with stats
+
+The extension connects to `ws://localhost:3000/ws?role=extension` by default.
+
+### Production Distribution
+
+**Option A: Chrome Web Store (planned)**
+- Package extension as `.zip` of the `extension/` directory
+- Submit to Chrome Web Store developer dashboard
+- Users install with one click
+- Requires a $5 developer registration fee
+
+**Option B: Self-hosted .crx**
+- Build and sign the extension
+- Host `.crx` file on the API server
+- Users download and install manually
+- Chrome will warn about non-store extensions
+
+### Extension Environment Configuration
+
+For production, update the WebSocket URL in `extension/background.ts`:
+- Replace `ws://localhost:3000/ws` with `wss://api.berlinkeys.app/ws`
+- Consider making this configurable via `chrome.storage.sync`
+
 ## Environment Variable Checklist
 
 | Variable | Set in Railway? | Verified? |

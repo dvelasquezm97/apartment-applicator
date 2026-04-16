@@ -1,6 +1,6 @@
 # Stack
 
-> Last updated: 2026-04-14
+> Last updated: 2026-04-16
 > Status: FINAL
 
 ## Runtime & Language
@@ -24,6 +24,7 @@ and modern import syntax.
 | Security headers | @fastify/helmet | ^13.x | Sane security defaults |
 | File uploads | @fastify/multipart | ^10.x | Document upload handling |
 | Static files | @fastify/static | ^9.x | Serve built dashboard in production |
+| WebSocket | @fastify/websocket | ^11.x | Real-time extension + dashboard communication |
 | Auth | @fastify/jwt | ^10.x | JWT verification for API routes |
 
 ## Database, Auth & Storage
@@ -103,6 +104,18 @@ and modern import syntax.
 | Worker service | `npm run start:worker` | 1GB RAM min |
 | Redis | Railway Redis plugin | Shared by both services |
 | Build | nixpacks | Auto-detected Node.js |
+
+## Chrome Extension
+
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| Manifest | Chrome Manifest V3 | Required for modern Chrome extensions; service worker-based background |
+| Background | Service worker (background.ts) | WebSocket connection to backend, command routing to content script |
+| Content script | content.ts | DOM automation with verified Immoscout selectors, runs in page context |
+| Popup | popup.html + popup.ts | Live stats (applied/failed/skipped), connection status |
+| Notifications | chrome.notifications API | Browser alerts when CAPTCHA detected |
+
+**Distribution:** Currently loaded as unpacked extension. Chrome Web Store listing planned.
 
 ## gstack Evaluation
 

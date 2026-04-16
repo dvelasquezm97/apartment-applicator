@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
+  { path: '/live', label: 'Live Feed' },
   { path: '/applications', label: 'Applications' },
   { path: '/documents', label: 'Documents' },
   { path: '/settings', label: 'Settings' },

@@ -53,3 +53,30 @@ through Playwright stealth. Developers must use one of two approaches:
 - Arc browser CDP — connect to a running Arc browser session where user is already logged in
 **Workaround:** Once cookies are captured and stored in Supabase, they persist across
 sessions. Only need to re-capture when cookies expire (typically days to weeks).
+**Note:** The Chrome extension bypasses this issue entirely — it runs in the user's real
+browser where they are already logged in to Immoscout.
+
+---
+
+## [2026-04-16] Extension must be loaded as unpacked (no Chrome Web Store listing)
+
+**Modules affected:** M10 (Dashboard), Chrome Extension
+**Severity:** Medium — affects distribution to non-technical users
+**Details:** The Chrome extension is not published on the Chrome Web Store. Users must
+load it as an unpacked extension via `chrome://extensions` with Developer Mode enabled.
+This requires enabling Developer Mode and navigating to the `extension/` directory.
+**Workaround:** Provide step-by-step instructions in the onboarding wizard (Step 3).
+Chrome Web Store listing planned for future release.
+
+---
+
+## [2026-04-16] Dashboard WebSocket URL hardcoded to localhost
+
+**Modules affected:** M10 (Dashboard), Chrome Extension
+**Severity:** Medium — blocks production deployment
+**Details:** The WebSocket connection URL in `web/src/hooks/useWebSocket.ts` and in
+the extension's `background.ts` is hardcoded to `ws://localhost:3000/ws`. This works
+for local development but will not work in production.
+**Workaround:** For local dev, no action needed. For production, the WS URL must be
+made configurable via environment variable (Vite's `import.meta.env`) and the extension's
+storage settings.

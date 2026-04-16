@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BerlinKeys</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      width: 320px;
+      background: #fafafa;
+      color: #1a1a1a;
+      font-size: 13px;
+    }
+
+    .header {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+
+    .header .version {
+      font-size: 11px;
+      opacity: 0.5;
+      margin-left: auto;
+    }
+
+    .status-section {
+      padding: 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-dot.connected {
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+    }
+
+    .status-dot.disconnected {
+      background: #ef4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+    }
+
+    .status-dot.error {
+      background: #f59e0b;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.3);
+    }
+
+    .status-text {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .url-section {
+      padding: 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .url-section label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #374151;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .url-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .stats-section {
+      padding: 16px;
+    }
+
+    .stats-section h2 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .stat-value.success {
+      color: #22c55e;
+    }
+
+    .stat-value.failed {
+      color: #ef4444;
+    }
+
+    .stat-value.skipped {
+      color: #a3a3a3;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: #888;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .footer {
+      padding: 8px 16px 12px;
+      text-align: center;
+    }
+
+    .btn-reset {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 11px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .btn-reset:hover {
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>BerlinKeys</h1>
+    <span class="version">v0.1.0</span>
+  </div>
+
+  <div class="status-section">
+    <div class="status-row">
+      <div class="status-dot disconnected" id="statusDot"></div>
+      <span class="status-text" id="statusText">Disconnected</span>
+    </div>
+  </div>
+
+  <div class="url-section">
+    <label for="wsUrl">Backend URL</label>
+    <input
+      type="text"
+      class="url-input"
+      id="wsUrl"
+      placeholder="ws://localhost:3000/ws?role=extension&token=..."
+    />
+    <div class="btn-row">
+      <button class="btn btn-primary" id="connectBtn">Connect</button>
+      <button class="btn btn-secondary" id="disconnectBtn" disabled>Disconnect</button>
+    </div>
+  </div>
+
+  <div class="stats-section">
+    <h2>Session Stats</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value success" id="appliedCount">0</div>
+        <div class="stat-label">Applied</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value failed" id="failedCount">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value skipped" id="skippedCount">0</div>
+        <div class="stat-label">Skipped</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="btn-reset" id="resetBtn">Reset stats</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

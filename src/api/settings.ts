@@ -11,7 +11,7 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
     const userId = getUserId(request);
     const { data, error } = await supabaseAdmin
       .from('bk_users')
-      .select('id, immoscout_email, profile, automation_paused, daily_application_count, daily_application_reset_at, telegram_chat_id, created_at')
+      .select('id, immoscout_email, profile, automation_paused, daily_application_count, daily_application_reset_at, telegram_chat_id, search_url, onboarding_complete, created_at')
       .eq('id', userId)
       .single();
 
@@ -27,16 +27,18 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
       automationPaused: data.automation_paused,
       dailyApplicationCount: data.daily_application_count,
       telegramChatId: data.telegram_chat_id,
+      searchUrl: data.search_url,
+      onboardingComplete: data.onboarding_complete,
       createdAt: data.created_at,
     };
   });
 
   // PUT /api/settings — update Immoscout credentials + automation toggle
-  server.put<{ Body: { immoscoutEmail?: string; immoscoutPassword?: string; automationPaused?: boolean } }>(
+  server.put<{ Body: { immoscoutEmail?: string; immoscoutPassword?: string; automationPaused?: boolean; searchUrl?: string; onboardingComplete?: boolean } }>(
     '/api/settings',
     async (request, reply) => {
       const userId = getUserId(request);
-      const { immoscoutEmail, immoscoutPassword, automationPaused } = request.body;
+      const { immoscoutEmail, immoscoutPassword, automationPaused, searchUrl, onboardingComplete } = request.body;
 
       const updates: Record<string, any> = {};
       if (immoscoutEmail !== undefined) updates.immoscout_email = immoscoutEmail;
@@ -44,6 +46,8 @@ export async function registerSettingsRoutes(server: FastifyInstance): Promise<v
         updates.immoscout_password_encrypted = encrypt(immoscoutPassword);
       }
       if (automationPaused !== undefined) updates.automation_paused = automationPaused;
+      if (searchUrl !== undefined) updates.search_url = searchUrl;
+      if (onboardingComplete !== undefined) updates.onboarding_complete = onboardingComplete;
 
       const { error } = await supabaseAdmin
         .from('bk_users')

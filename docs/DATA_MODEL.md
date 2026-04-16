@@ -21,6 +21,8 @@
 | daily_application_count | integer | default 0 | Reset daily, tracks against DAILY_APPLICATION_CAP |
 | daily_application_reset_at | timestamptz | nullable | When daily_application_count was last reset |
 | automation_paused | boolean | default false | true = all jobs paused for this user |
+| search_url | text | nullable | User's Immoscout search URL (e.g., filtered Berlin apartments) |
+| onboarding_complete | boolean | default false | Whether user finished the 4-step onboarding wizard |
 | created_at | timestamptz | default now() | — |
 | updated_at | timestamptz | default now() | Auto-updated via trigger |
 

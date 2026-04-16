@@ -46,6 +46,8 @@ interface Settings {
   automationPaused: boolean;
   dailyApplicationCount: number;
   telegramChatId: number | null;
+  searchUrl: string | null;
+  onboardingComplete: boolean;
   createdAt: string;
 }
 
@@ -55,6 +57,16 @@ interface Message {
   content: string;
   receivedAt: string;
   processedAt: string | null;
+}
+
+interface ApplyStatus {
+  status: 'idle' | 'scraping' | 'applying' | 'paused' | 'done';
+  applied: number;
+  failed: number;
+  skipped: number;
+  total: number;
+  currentListing: string | null;
+  extensionConnected: boolean;
 }
 
 // ---- Hooks ----
@@ -108,7 +120,7 @@ export function useSettings() {
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { immoscoutEmail?: string; immoscoutPassword?: string; automationPaused?: boolean }) =>
+    mutationFn: (data: { immoscoutEmail?: string; immoscoutPassword?: string; automationPaused?: boolean; searchUrl?: string; onboardingComplete?: boolean }) =>
       apiFetch('/settings', { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
@@ -141,5 +153,33 @@ export function useDeleteDocument() {
     mutationFn: (id: string) =>
       apiFetch(`/documents/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+  });
+}
+
+// ---- Apply Loop ----
+
+export function useApplyStatus() {
+  return useQuery<ApplyStatus>({
+    queryKey: ['apply-status'],
+    queryFn: () => apiFetch('/apply/status'),
+    refetchInterval: 5_000,
+  });
+}
+
+export function useStartApply() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ success: boolean; message: string }>('/apply/start', { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['apply-status'] }),
+  });
+}
+
+export function useStopApply() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiFetch<{ success: boolean; message: string }>('/apply/stop', { method: 'POST' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['apply-status'] }),
   });
 }

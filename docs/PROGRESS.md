@@ -157,3 +157,46 @@
 - End-to-end pilot test of M1-M4 core loop with real listings
 - Validate apply flow against live Immoscout with real account
 - Only after pilot success: M5 Document Sender, M6 Appointment Handler
+
+## Session: 2026-04-16 (continued) — Chrome Extension + Dashboard Onboarding
+
+### Phase 1: Chrome Extension + WebSocket (COMPLETE)
+
+- Designed and implemented Chrome Manifest V3 extension for real-browser automation
+- Created shared WebSocket message types (commands, events, progress updates) in `src/orchestrator/types.ts`
+- Implemented Fastify WebSocket plugin (`src/api/ws.ts`): extension + dashboard connections, event routing, `waitForExtensionEvent()` promise-based listener
+- Built ApplyLoop orchestrator (`src/orchestrator/apply-loop.ts`): scrape → filter → navigate → apply → record cycle with CAPTCHA pause/wait, daily cap enforcement, human-like delays (30-60s between actions)
+- Added REST endpoints (`src/api/apply.ts`): POST /api/apply/start, POST /api/apply/stop, GET /api/apply/status
+- Built Chrome extension (`extension/`): background.ts (WS connection, command routing), content.ts (DOM automation with verified selectors), popup.html/ts (live status + stats), manifest.json
+- Added migration `00012_add_search_url.sql` — search_url and onboarding_complete columns on bk_users
+- Extension sends browser notifications when CAPTCHA detected
+- Orchestrator stops gracefully when extension disconnects mid-loop
+
+### Phase 2: Dashboard Onboarding + Live Feed (COMPLETE)
+
+- Built 4-step onboarding wizard (`web/src/pages/Onboarding.tsx`): Profile → Search URL → Install Extension → Start Applying
+- Built real-time Live Feed page (`web/src/pages/LiveFeed.tsx`): applied/failed/skipped counts, status badge, scrolling results list, stop button
+- Created React WebSocket hook (`web/src/hooks/useWebSocket.ts`) with auto-reconnect
+- Extended API hooks (`web/src/hooks/useApi.ts`): useApplyStatus, useStartApply, useStopApply + searchUrl/onboardingComplete on Settings type
+- Updated App.tsx with /onboarding and /live routes, redirect to onboarding if not complete
+- Added "Live Feed" to sidebar nav in Layout.tsx
+- Added search URL field to Settings page
+
+### Decisions made
+1. Chrome Extension architecture over server-side Playwright (runs in user's real browser, no CAPTCHA issues)
+2. WebSocket for real-time extension <-> backend <-> dashboard communication
+3. Extension popup shows live stats (applied/failed/skipped)
+4. Browser notifications for CAPTCHA alerts
+5. Orchestrator checks extension connection before each apply (stops if disconnected)
+6. 4-step onboarding wizard for non-technical users
+7. Live feed page with WebSocket-driven real-time updates
+
+### Current blockers
+- Extension must be loaded as unpacked (no Chrome Web Store listing yet)
+- Dashboard WS URL is hardcoded to localhost — needs config for production
+
+### What to build next
+- Publish extension to Chrome Web Store (or distribute as .crx)
+- Make WS URL configurable via environment variable
+- End-to-end pilot test with real listings using the extension
+- M5 Document Sender, M6 Appointment Handler (after pilot validation)
