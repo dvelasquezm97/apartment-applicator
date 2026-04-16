@@ -38,7 +38,9 @@ const DEFAULT_PROGRESS: ProgressUpdate = {
   currentListing: null,
 };
 
-const WS_URL = `ws://${window.location.hostname}:3000/ws?role=dashboard&token=dev-token&userId=00000000-0000-0000-0000-000000000001`;
+const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const WS_HOST = import.meta.env.DEV ? `${window.location.hostname}:3000` : window.location.host;
+const WS_URL = `${WS_PROTOCOL}//${WS_HOST}/ws?role=dashboard&token=dev-token&userId=00000000-0000-0000-0000-000000000001`;
 
 const RECONNECT_DELAY_MS = 3000;
 
