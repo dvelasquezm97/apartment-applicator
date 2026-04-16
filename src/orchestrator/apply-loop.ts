@@ -30,7 +30,7 @@ const SCRAPE_TIMEOUT_MS = 60_000;
 /** Timeout for a single apply operation (ms). */
 const APPLY_TIMEOUT_MS = 120_000;
 /** Maximum pages to scrape before stopping pagination. */
-const MAX_PAGES = 10;
+const MAX_PAGES = 20;
 
 /**
  * The ApplyLoop orchestrator coordinates the Chrome extension to
