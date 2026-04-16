@@ -32,17 +32,18 @@ async function start(): Promise<void> {
     timeWindow: '1 minute',
   });
 
+  // WebSocket support (must register before routes and static files)
+  await registerWebSocketPlugin(server);
+
   // Serve built dashboard in production
   if (env.NODE_ENV === 'production') {
     await server.register(fastifyStatic, {
       root: path.join(__dirname, '..', 'web', 'dist'),
       prefix: '/',
-      wildcard: false,
+      wildcard: true,
+      decorateReply: true,
     });
   }
-
-  // WebSocket support (must register before routes)
-  await registerWebSocketPlugin(server);
 
   // Register API routes
   await registerAllRoutes(server);
