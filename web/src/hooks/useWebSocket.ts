@@ -88,6 +88,11 @@ export function useWebSocket(): UseWebSocketReturn {
       ws.onclose = () => {
         if (!mountedRef.current) return;
         setConnected(false);
+        // Reset progress to idle on disconnect — the server will send
+        // the real status when we reconnect. Without this, a stale
+        // "scraping" or "applying" state sticks in the UI forever
+        // if the apply loop crashed while we were disconnected.
+        setProgress(DEFAULT_PROGRESS);
         wsRef.current = null;
         // Auto-reconnect
         reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);

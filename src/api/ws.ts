@@ -5,6 +5,7 @@ import type {
   ExtensionCommand,
   DashboardUpdate,
 } from '../orchestrator/types.js';
+import { getApplyLoopStatus } from './apply.js';
 
 const log = createChildLogger('api:ws');
 
@@ -256,16 +257,19 @@ function handleDashboardConnection(socket: WSocket, userId: string): void {
 
   log.info({ userId, dashboardCount: connections.size }, 'Dashboard client connected');
 
-  // Send initial status
-  const initialStatus: DashboardUpdate = {
-    type: 'progress',
-    status: 'idle',
-    applied: 0,
-    failed: 0,
-    skipped: 0,
-    total: 0,
-    currentListing: null,
-  };
+  // Send real loop status if one is running, otherwise idle
+  const loopStatus = getApplyLoopStatus(userId);
+  const initialStatus: DashboardUpdate = loopStatus
+    ? { type: 'progress', ...loopStatus } as DashboardUpdate
+    : {
+        type: 'progress',
+        status: 'idle',
+        applied: 0,
+        failed: 0,
+        skipped: 0,
+        total: 0,
+        currentListing: null,
+      };
   socket.send(JSON.stringify(initialStatus));
 
   socket.on('close', () => {

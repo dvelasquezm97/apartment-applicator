@@ -8,6 +8,20 @@ const log = createChildLogger('api:apply');
 // Active apply loops per user
 const activeLoops = new Map<string, ApplyLoop>();
 
+/** Get the current progress for a user's apply loop (used by ws.ts for initial dashboard state). */
+export function getApplyLoopStatus(userId: string): {
+  status: string;
+  applied: number;
+  failed: number;
+  skipped: number;
+  total: number;
+  currentListing: string | null;
+} | null {
+  const loop = activeLoops.get(userId);
+  if (!loop) return null;
+  return loop.getStatus();
+}
+
 export async function registerApplyRoutes(server: FastifyInstance): Promise<void> {
   // POST /api/apply/start — start the apply loop
   server.post('/api/apply/start', async (request, reply) => {
