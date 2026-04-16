@@ -14,6 +14,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const server = Fastify({ logger: false });
 
+// Allow empty bodies with Content-Type: application/json (e.g. POST /api/apply/start)
+server.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+  const str = (body as string).trim();
+  if (!str) {
+    done(null, undefined);
+    return;
+  }
+  try {
+    done(null, JSON.parse(str));
+  } catch (err) {
+    done(err as Error, undefined);
+  }
+});
+
 async function start(): Promise<void> {
   // CORS — allow Vite dev server in development
   await server.register(cors, {
