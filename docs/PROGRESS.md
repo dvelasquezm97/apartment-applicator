@@ -193,10 +193,56 @@
 
 ### Current blockers
 - Extension must be loaded as unpacked (no Chrome Web Store listing yet)
-- Dashboard WS URL is hardcoded to localhost — needs config for production
 
 ### What to build next
-- Publish extension to Chrome Web Store (or distribute as .crx)
-- Make WS URL configurable via environment variable
 - End-to-end pilot test with real listings using the extension
+- M5 Document Sender, M6 Appointment Handler (after pilot validation)
+
+## Session: 2026-04-16 (evening) — Production Deploy + Extension Keepalive Fix
+
+### What was done
+
+**Railway Production Deployment**
+- Deployed Fastify API + Vite dashboard to Railway (berlinkeys-api-production.up.railway.app)
+- Fixed Dockerfile: Tailwind/PostCSS configs, static file serving order, production WS URL
+- Redis connected via Railway internal networking
+
+**MV3 Service Worker Keepalive Fix**
+- Root cause: Chrome MV3 suspends background service workers after ~30s idle, killing the WebSocket
+- Fix: `chrome.alarms` keepalive fires every ~24s, sends ping on WebSocket to prevent suspension
+- Server responds with pong to keep connection alive in both directions
+- Added `PingEvent` to `ExtensionEvent` union type
+- Manifest permissions updated: replaced `activeTab` with `tabs` + added `alarms`
+
+**Dashboard State Fixes**
+- Fixed stale "scraping" state: dashboard now resets progress to idle on WS disconnect
+- Server sends real apply loop status on dashboard WS connect (not hardcoded idle)
+- Exported `getApplyLoopStatus()` from apply.ts for ws.ts to query
+
+**Fastify 400 on Bodyless POST**
+- `apiFetch` was setting `Content-Type: application/json` on every request including POSTs with no body
+- Fastify's JSON parser rejected the empty body — caused 400 on /apply/start and /apply/stop
+- Fix: only set Content-Type header when request has a body
+
+**LiveFeed UI Improvements**
+- Added Start Applying button (was missing — only had Stop)
+- Context-aware states: idle (Start button), running (status + Stop), done (summary + Run Again)
+- Extension disconnected state shows instructions to connect
+- Better status labels and colors
+
+**Configuration**
+- Increased MAX_PAGES from 10 to 20 (scrapes more search result pages per run)
+
+### Decisions made
+1. chrome.alarms keepalive pattern for MV3 (not offscreen document — simpler, sufficient)
+2. Ping/pong heartbeat on WebSocket (keeps both service worker and connection alive)
+3. Dashboard resets state on disconnect (prevents stale UI after apply loop crash)
+4. 20 pages of search results per run (was 10)
+
+### Current blockers
+- Extension must be loaded as unpacked (no Chrome Web Store listing yet)
+
+### What to build next
+- Full pilot test of apply loop with real Immoscout listings
+- Monitor extension stability across long apply sessions
 - M5 Document Sender, M6 Appointment Handler (after pilot validation)

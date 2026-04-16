@@ -16,7 +16,7 @@
 | 7 | External Form | NOT_STARTED | src/modules/external-form/index.ts | M4 | — |
 | 8 | Manual Form Upload | NOT_STARTED | src/modules/manual-form-upload/index.ts | M7 | — |
 | 9 | Telegram Bot | NOT_STARTED | src/modules/telegram-bot/index.ts | — | — |
-| 10 | Web Dashboard | IN_PROGRESS | src/modules/dashboard/index.ts | — | API + pages + onboarding wizard + live feed done; Chrome extension built; no auth yet |
+| 10 | Web Dashboard | IN_PROGRESS | src/modules/dashboard/index.ts | — | API + pages + onboarding + live feed done; Chrome extension built with MV3 keepalive; deployed to Railway; no auth yet |
 
 ## Status Values
 
@@ -33,6 +33,11 @@ scripting. The backend orchestrator communicates with it over WebSocket.
 
 Key files: `extension/background.ts`, `extension/content.ts`, `extension/popup.html`,
 `extension/popup.ts`, `extension/manifest.json`.
+
+**MV3 Keepalive:** Chrome suspends MV3 service workers after ~30s idle. The extension
+uses `chrome.alarms` (fires every ~24s) to send ping messages on the WebSocket,
+preventing suspension. The server responds with pong. Permissions: `tabs`, `storage`,
+`notifications`, `alarms`.
 
 ## Build Order
 

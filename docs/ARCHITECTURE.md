@@ -217,13 +217,41 @@ Map known fields to user profile data
 ### WebSocket Connection Topology
 
 ```
-Chrome Extension ──(ws)──► Fastify /ws?role=extension
-                                    │
-                            WebSocket Hub (ws.ts)
-                            waitForExtensionEvent()
-                                    │
-React Dashboard  ──(ws)──► Fastify /ws?role=dashboard
+Chrome Extension ──(wss)──► Fastify /ws?role=extension
+                                     │
+                             WebSocket Hub (ws.ts)
+                             waitForExtensionEvent()
+                             ping/pong keepalive
+                                     │
+React Dashboard  ──(wss)──► Fastify /ws?role=dashboard
 ```
+
+### MV3 Service Worker Keepalive
+
+Chrome Manifest V3 suspends background service workers after ~30s of inactivity,
+which kills the WebSocket connection. The extension prevents this with:
+
+1. `chrome.alarms` fires every ~24s (`bk-keepalive` alarm)
+2. Alarm handler sends `{ type: 'ping' }` on the WebSocket
+3. Server responds with `{ type: 'pong' }` (handled in ws.ts, not forwarded to event listeners)
+4. If WebSocket is dead when alarm fires, triggers immediate reconnect
+
+On dashboard WS connect, the server sends the real apply loop status (via
+`getApplyLoopStatus()`) instead of hardcoded idle. The dashboard also resets
+progress state on WS disconnect to prevent stale UI after apply loop crashes.
+
+Manifest permissions: `tabs`, `storage`, `notifications`, `alarms`.
+
+### Apply Loop Configuration
+
+| Setting | Value | Location |
+|---------|-------|----------|
+| MAX_PAGES | 20 | src/orchestrator/apply-loop.ts |
+| DAILY_APPLICATION_CAP | 20 (default) | env var / src/config/env.ts |
+| Human delay between applies | 30-60s | src/orchestrator/apply-loop.ts |
+| Navigate timeout | 30s | src/orchestrator/apply-loop.ts |
+| Scrape timeout | 60s | src/orchestrator/apply-loop.ts |
+| Single apply timeout | 120s | src/orchestrator/apply-loop.ts |
 
 - Extension connects with `role=extension` — receives commands, sends events
 - Dashboard connects with `role=dashboard` — receives progress broadcasts

@@ -235,7 +235,9 @@ The extension is loaded as an unpacked extension:
 3. Click "Load unpacked" → select the `extension/` directory
 4. Extension icon appears in toolbar — click to see popup with stats
 
-The extension connects to `ws://localhost:3000/ws?role=extension` by default.
+The extension connects to the production Railway WebSocket by default
+(`wss://berlinkeys-api-production.up.railway.app/ws`). Override via extension popup settings
+or `chrome.storage.local` key `wsUrl`.
 
 ### Production Distribution
 
@@ -253,23 +255,35 @@ The extension connects to `ws://localhost:3000/ws?role=extension` by default.
 
 ### Extension Environment Configuration
 
-For production, update the WebSocket URL in `extension/background.ts`:
-- Replace `ws://localhost:3000/ws` with `wss://api.berlinkeys.app/ws`
-- Consider making this configurable via `chrome.storage.sync`
+The production WebSocket URL is set in `extension/background.ts` (`BK_DEFAULT_WS_URL`).
+Current production URL: `wss://berlinkeys-api-production.up.railway.app/ws`.
+Users can override via `chrome.storage.local` key `wsUrl`.
+
+**Manifest V3 permissions:** `tabs`, `storage`, `notifications`, `alarms`
+- `tabs` — navigate and query Immoscout tabs in background
+- `alarms` — keepalive ping every ~24s prevents service worker suspension
+- `storage` — persist WS URL and settings
+- `notifications` — CAPTCHA alerts
+
+After any change to `extension/*.ts`, recompile:
+```bash
+cd extension && npx tsc --project tsconfig.json
+```
+Then reload the extension in Chrome (`chrome://extensions` → reload button).
 
 ## Environment Variable Checklist
 
 | Variable | Set in Railway? | Verified? |
 |----------|----------------|-----------|
-| SUPABASE_URL | [ ] | [ ] |
-| SUPABASE_SERVICE_ROLE_KEY | [ ] | [ ] |
+| SUPABASE_URL | [x] | [x] |
+| SUPABASE_SERVICE_ROLE_KEY | [x] | [x] |
 | SUPABASE_ANON_KEY | [ ] | [ ] |
-| REDIS_URL | [ ] | [ ] |
+| REDIS_URL | [x] | [x] |
 | TELEGRAM_BOT_TOKEN | [ ] | [ ] |
 | GOOGLE_CLIENT_ID | [ ] | [ ] |
 | GOOGLE_CLIENT_SECRET | [ ] | [ ] |
 | GOOGLE_REDIRECT_URI | [ ] | [ ] |
 | ANTHROPIC_API_KEY | [ ] | [ ] |
-| ENCRYPTION_KEY | [ ] | [ ] |
-| HEADLESS | [ ] | [ ] |
-| NODE_ENV | [ ] | [ ] |
+| ENCRYPTION_KEY | [x] | [x] |
+| DAILY_APPLICATION_CAP | [ ] | [ ] (default: 20) |
+| NODE_ENV | [x] | [x] (production) |

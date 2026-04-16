@@ -70,13 +70,17 @@ Chrome Web Store listing planned for future release.
 
 ---
 
-## [2026-04-16] Dashboard WebSocket URL hardcoded to localhost
+## ~~[2026-04-16] Dashboard WebSocket URL hardcoded to localhost~~ RESOLVED 2026-04-16
 
-**Modules affected:** M10 (Dashboard), Chrome Extension
-**Severity:** Medium — blocks production deployment
-**Details:** The WebSocket connection URL in `web/src/hooks/useWebSocket.ts` and in
-the extension's `background.ts` is hardcoded to `ws://localhost:3000/ws`. This works
-for local development but will not work in production.
-**Workaround:** For local dev, no action needed. For production, the WS URL must be
-made configurable via environment variable (Vite's `import.meta.env`) and the extension's
-storage settings.
+Dashboard WS URL now auto-detects protocol (ws/wss) and host from `window.location`.
+Extension defaults to production Railway URL (`wss://berlinkeys-api-production.up.railway.app/ws`)
+and can be overridden via `chrome.storage.local`.
+
+---
+
+## ~~[2026-04-16] MV3 service worker suspension kills WebSocket~~ RESOLVED 2026-04-16
+
+Chrome Manifest V3 suspends background service workers after ~30s idle, which killed the
+WebSocket connection when the user switched tabs. Fixed with `chrome.alarms` keepalive
+(fires every ~24s) + ping/pong heartbeat on the WebSocket. Added `alarms` permission
+to manifest, replaced `activeTab` with `tabs`.
