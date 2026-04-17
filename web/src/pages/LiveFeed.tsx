@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useWebSocket, type ListingResultUpdate } from '../hooks/useWebSocket.js';
-import { useStopApply, useStartApply, useApplyStatus } from '../hooks/useApi.js';
+import { useStopApply, useStartApply, useApplyStatus, useStats } from '../hooks/useApi.js';
 
 const STATUS_LABELS: Record<string, string> = {
   idle: 'Idle',
@@ -50,6 +50,7 @@ function ResultLabel({ status }: { status: ListingResultUpdate['status'] }) {
 export function LiveFeed() {
   const { progress, listingResults, connected } = useWebSocket();
   const { data: applyStatus } = useApplyStatus();
+  const { data: stats } = useStats();
   const startApply = useStartApply();
   const stopApply = useStopApply();
   const listEndRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,9 @@ export function LiveFeed() {
   const extensionConnected = applyStatus?.extensionConnected ?? false;
   const isRunning = progress.status !== 'idle' && progress.status !== 'done';
   const isIdle = progress.status === 'idle' || progress.status === 'done';
+  const dailyUsed = stats?.daily.applicationsToday ?? 0;
+  const dailyCap = stats?.daily.dailyCap ?? 20;
+  const capReached = dailyUsed >= dailyCap;
 
   return (
     <div>
@@ -81,6 +85,29 @@ export function LiveFeed() {
         </div>
       </div>
 
+      {/* Daily usage bar */}
+      {stats && (
+        <div className="bg-white rounded-lg border p-4 mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">Daily applications</span>
+            <span className={`text-sm font-semibold ${capReached ? 'text-orange-600' : 'text-gray-600'}`}>
+              {dailyUsed} / {dailyCap}
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all ${capReached ? 'bg-orange-500' : 'bg-green-500'}`}
+              style={{ width: `${Math.min(100, (dailyUsed / dailyCap) * 100)}%` }}
+            />
+          </div>
+          {capReached && (
+            <p className="text-xs text-orange-600 mt-2">
+              Daily limit reached. The counter resets automatically tomorrow.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Action card — Start or Status */}
       {isIdle && (
         <div className="bg-white rounded-lg border p-8 mb-6 text-center">
@@ -91,6 +118,15 @@ export function LiveFeed() {
               <p className="text-gray-500 text-sm mb-4">
                 Make sure the BerlinKeys Chrome extension is installed and shows "Connected" in its popup.
                 Open any Immoscout24 page to activate it.
+              </p>
+            </>
+          ) : capReached ? (
+            <>
+              <div className="text-4xl mb-3">{'🛑'}</div>
+              <h3 className="text-lg font-semibold mb-2">Daily limit reached</h3>
+              <p className="text-gray-500 text-sm mb-4">
+                You've applied to {dailyUsed} apartments today (limit: {dailyCap}).
+                The counter resets automatically tomorrow to avoid triggering Immoscout rate limits.
               </p>
             </>
           ) : (
@@ -171,13 +207,15 @@ export function LiveFeed() {
                 {progress.skipped > 0 ? `${progress.skipped} skipped (already applied).` : ''}
               </p>
             </div>
-            <button
-              onClick={() => startApply.mutate()}
-              disabled={startApply.isPending || !extensionConnected}
-              className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-            >
-              Run Again
-            </button>
+            {!capReached && (
+              <button
+                onClick={() => startApply.mutate()}
+                disabled={startApply.isPending || !extensionConnected}
+                className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+              >
+                Run Again
+              </button>
+            )}
           </div>
         </div>
       )}

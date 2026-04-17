@@ -7,7 +7,7 @@ interface StatsResponse {
   applications: { total: number; byStatus: Record<string, number> };
   listings: { total: number };
   documents: { total: number };
-  daily: { applicationsToday: number; automationPaused: boolean; resetAt: string | null };
+  daily: { applicationsToday: number; dailyCap: number; automationPaused: boolean; resetAt: string | null };
   messages: { unprocessed: number };
 }
 
@@ -75,7 +75,7 @@ export function useStats() {
   return useQuery<StatsResponse>({
     queryKey: ['stats'],
     queryFn: () => apiFetch('/stats'),
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 }
 
@@ -171,7 +171,10 @@ export function useStartApply() {
   return useMutation({
     mutationFn: () =>
       apiFetch<{ success: boolean; message: string }>('/apply/start', { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['apply-status'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apply-status'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
   });
 }
 
@@ -180,6 +183,9 @@ export function useStopApply() {
   return useMutation({
     mutationFn: () =>
       apiFetch<{ success: boolean; message: string }>('/apply/stop', { method: 'POST' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['apply-status'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apply-status'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
   });
 }

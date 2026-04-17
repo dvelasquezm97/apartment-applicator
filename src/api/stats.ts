@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { supabaseAdmin } from '../lib/supabase.js';
+import { env } from '../config/env.js';
 
 export async function registerStatsRoutes(server: FastifyInstance): Promise<void> {
   // GET /api/stats — dashboard overview stats
@@ -53,7 +54,10 @@ export async function registerStatsRoutes(server: FastifyInstance): Promise<void
         total: docCount || 0,
       },
       daily: {
-        applicationsToday: user?.daily_application_count || 0,
+        applicationsToday: shouldResetDaily(user?.daily_application_reset_at)
+          ? 0
+          : (user?.daily_application_count || 0),
+        dailyCap: env.DAILY_APPLICATION_CAP,
         automationPaused: user?.automation_paused || false,
         resetAt: user?.daily_application_reset_at,
       },
@@ -62,6 +66,16 @@ export async function registerStatsRoutes(server: FastifyInstance): Promise<void
       },
     };
   });
+}
+
+/**
+ * Check if the daily counter should be treated as reset.
+ * reset_at stores the next reset boundary (tomorrow midnight).
+ * If reset_at is in the past (or null), the counter should be zero.
+ */
+function shouldResetDaily(resetAt: string | null | undefined): boolean {
+  if (!resetAt) return true;
+  return new Date(resetAt) <= new Date();
 }
 
 function getUserId(request: any): string {
