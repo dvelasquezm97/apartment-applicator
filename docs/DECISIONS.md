@@ -311,3 +311,35 @@ if `onboarding_complete` is false.
 already exists for extension communication — the dashboard connects with `role=dashboard`
 and receives the same progress events. The Live Feed page shows applied/failed/skipped
 counts, a status badge, a scrolling results list, and a stop button.
+
+---
+
+## [2026-04-16] Decision: chrome.alarms keepalive for MV3 service worker
+
+**Options considered:**
+- A) Offscreen document to maintain persistent WebSocket
+- B) chrome.alarms keepalive ping every ~24s
+
+**Chosen:** B — chrome.alarms keepalive
+
+**Rationale:** Chrome MV3 suspends background service workers after ~30s idle, killing the
+WebSocket connection. The offscreen document approach (option A) is more complex and requires
+the `offscreen` permission. The alarms approach is simpler: a recurring alarm fires every ~24s,
+sends a ping on the WebSocket, and the server responds with pong. This keeps both the service
+worker alive and the WebSocket active. If the WebSocket is dead when the alarm fires, it
+triggers an immediate reconnect.
+
+---
+
+## [2026-04-16] Decision: Server-side empty body parser over client-only fix
+
+**Options considered:**
+- A) Only fix client to not send Content-Type on bodyless POSTs
+- B) Also add server-side custom JSON parser that accepts empty bodies
+
+**Chosen:** Both A and B (belt and suspenders)
+
+**Rationale:** Fastify's default JSON parser rejects empty bodies when Content-Type:
+application/json is set. Fixing only the client leaves the server vulnerable to cached
+frontend bundles or other clients hitting the same issue. The server-side parser treats
+empty strings as undefined body, making the API more resilient.

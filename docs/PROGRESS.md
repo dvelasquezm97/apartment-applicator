@@ -233,16 +233,30 @@
 **Configuration**
 - Increased MAX_PAGES from 10 to 20 (scrapes more search result pages per run)
 
+**Server-Side Empty Body Fix**
+- Added custom Fastify content type parser to accept empty JSON bodies
+- Fixes the 400 from both client-side and server-side (belt and suspenders)
+
+**Apply Loop User Feedback**
+- Apply loop now broadcasts reason when exiting early (daily cap reached, no search URL, no profile)
+- Previously the loop returned silently, leaving the user confused
+- Daily application count was stuck at 20/20 — reset via Supabase directly
+- Settings PUT endpoint does not allow resetting dailyApplicationCount (known gap)
+
 ### Decisions made
 1. chrome.alarms keepalive pattern for MV3 (not offscreen document — simpler, sufficient)
 2. Ping/pong heartbeat on WebSocket (keeps both service worker and connection alive)
 3. Dashboard resets state on disconnect (prevents stale UI after apply loop crash)
 4. 20 pages of search results per run (was 10)
+5. Server-side empty body parser (don't rely on client fix alone for Fastify JSON requirement)
 
 ### Current blockers
 - Extension must be loaded as unpacked (no Chrome Web Store listing yet)
+- Settings API does not expose daily count reset — must reset via Supabase directly
+- Apply loop not yet tested end-to-end with real listings in production
 
 ### What to build next
 - Full pilot test of apply loop with real Immoscout listings
+- Add daily count reset to settings API (or auto-reset on new day)
 - Monitor extension stability across long apply sessions
 - M5 Document Sender, M6 Appointment Handler (after pilot validation)

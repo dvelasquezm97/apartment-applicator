@@ -1,6 +1,6 @@
 # BerlinKeys — Automated Apartment Application System for Immoscout24
 
-> Status: M1-M4 COMPLETE, Phase A done, Chrome Extension + Onboarding + Live Feed built — ready for pilot
+> Status: M1-M4 COMPLETE, Phase A done, Chrome Extension + Onboarding + Live Feed built, deployed to Railway — pilot testing
 > Last updated: 2026-04-16
 > Company: [Aucto](~/Desktop/aucto/) — Agentic-first company
 
