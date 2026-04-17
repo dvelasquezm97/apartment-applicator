@@ -379,11 +379,15 @@ export class ApplyLoop {
       : null;
     const now = new Date();
 
-    // If reset_at is yesterday or earlier, the count should be reset
-    if (!resetAt || resetAt.toDateString() !== now.toDateString()) {
+    // reset_at stores the next reset boundary (tomorrow midnight).
+    // If it's in the past or null, the counter should be reset.
+    if (!resetAt || resetAt <= now) {
+      const nextReset = new Date();
+      nextReset.setDate(nextReset.getDate() + 1);
+      nextReset.setHours(0, 0, 0, 0);
       await supabaseAdmin
         .from('bk_users')
-        .update({ daily_application_count: 0, daily_application_reset_at: now.toISOString() })
+        .update({ daily_application_count: 0, daily_application_reset_at: nextReset.toISOString() })
         .eq('id', this.userId);
       return env.DAILY_APPLICATION_CAP;
     }
